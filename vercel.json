@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "logbook/package.json", "use": "@vercel/static-build" }
+  ],
+  "routes": [
+    { "src": "/favicon.ico", "dest": "/favicon.svg" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
