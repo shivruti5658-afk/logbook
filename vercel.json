@@ -1,7 +1,7 @@
 {
   "version": 2,
   "builds": [
-    { "src": "logbook/package.json", "use": "@vercel/static-build" }
+    { "src": "logbook/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
   ],
   "routes": [
     { "src": "/favicon.ico", "dest": "/favicon.svg" },
