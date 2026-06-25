@@ -65,7 +65,7 @@ function createPdfFromEntry(doc, entry, pageWidth, pageHeight, margin) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(15, 23, 42);
-    doc.text(value, margin + 96, y, { maxWidth: maxWidth - 96 });
+    doc.text(String(value), margin + 96, y, { maxWidth: maxWidth - 96 });
     y += 16;
   });
 
@@ -92,7 +92,7 @@ function createPdfFromEntry(doc, entry, pageWidth, pageHeight, margin) {
   doc.text("TOOLS USED", margin, y);
   y += 18;
 
-  const toolsLines = doc.splitTextToSize(entry.tools || "-", maxWidth);
+  const toolsLines = doc.splitTextToSize(String(entry.tools || "-"), maxWidth);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(37, 47, 70);
@@ -105,7 +105,7 @@ function createPdfFromEntry(doc, entry, pageWidth, pageHeight, margin) {
   doc.text("REFERENCE", margin, y);
   y += 18;
 
-  const referenceLines = doc.splitTextToSize(entry.reference || "-", maxWidth);
+  const referenceLines = doc.splitTextToSize(String(entry.reference || "-"), maxWidth);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(37, 47, 70);
