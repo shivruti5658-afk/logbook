@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 import { jsPDF } from "jspdf";
 
@@ -608,30 +609,7 @@ export default function Logbook() {
     <div
       className={`aerolog-root ${theme === "dark" ? "theme-dark" : "theme-light"}`}
     >
-      <div
-        className="topbar"
-        style={{ borderBottom: `3px solid ${themeVars.accent}` }}
-      >
-        <div className="topbar-inner">
-          <div className="brand">
-            <div className="brand-sub">✈ AEROLOG PRO</div>
-            <div className="brand-title">Aviation Maintenance Logbook</div>
-          </div>
-          <div className="topbar-actions">
-            <span className="topbar-date">
-              {new Date().toLocaleDateString()}
-            </span>
-            <button
-              className="primary-btn"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
-            </button>
-          </div>
-        </div>
-        {/* Full-width subtitle band below the topbar-inner */}
-        <div className="topbar-band">WORK LOG @ HORIZON</div>
-      </div>
+      <Header theme={theme} setTheme={setTheme} themeVars={themeVars} />
 
       <div className="page-content">
         <div className="page-header">
