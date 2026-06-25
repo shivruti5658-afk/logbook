@@ -31,9 +31,21 @@ function createPdfFromEntry(doc, entry, pageWidth, pageHeight, margin) {
   doc.text("AEROLOG PRO", margin, y);
   y += 28;
 
+  // Render subtitle in a full-width padded band below the title for a
+  // cleaner, more professional appearance on the PDF.
+  const bandHeight = 32;
+  const bandY = y - 6;
+  doc.setFillColor(245, 250, 255);
+  doc.setDrawColor(245, 250, 255);
+  doc.rect(margin, bandY, maxWidth, bandHeight, "F");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(14);
-  doc.text("AVIATION MAINTENANCE ENTRY", margin, y);
-  y += 22;
+  doc.setTextColor(17, 24, 40);
+  const subtitle = "WORK LOG @ HORIZON";
+  doc.text(subtitle, margin + maxWidth / 2, bandY + bandHeight / 2 + 5, {
+    align: "center",
+  });
+  y += bandHeight + 8;
 
   doc.setDrawColor(37, 99, 235);
   doc.setLineWidth(1.5);
@@ -105,7 +117,10 @@ function createPdfFromEntry(doc, entry, pageWidth, pageHeight, margin) {
   doc.text("REFERENCE", margin, y);
   y += 18;
 
-  const referenceLines = doc.splitTextToSize(String(entry.reference || "-"), maxWidth);
+  const referenceLines = doc.splitTextToSize(
+    String(entry.reference || "-"),
+    maxWidth,
+  );
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(37, 47, 70);
