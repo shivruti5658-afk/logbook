@@ -629,6 +629,8 @@ export default function Logbook() {
             </button>
           </div>
         </div>
+        {/* Full-width subtitle band below the topbar-inner */}
+        <div className="topbar-band">WORK LOG @ HORIZON</div>
       </div>
 
       <div className="page-content">

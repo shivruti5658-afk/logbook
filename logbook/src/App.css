@@ -92,6 +92,30 @@ body,
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
 }
 
+/* Full-width subtitle band below the topbar */
+.topbar-band {
+  width: 100%;
+  padding: 10px 24px;
+  text-align: center;
+  font-weight: 700;
+  color: #e6eefc;
+  background: linear-gradient(90deg, rgba(7,17,31,0.95), rgba(15,23,42,0.95));
+  border-top: 1px solid rgba(255,255,255,0.02);
+}
+
+.theme-light .topbar-band {
+  color: #063049;
+  background: linear-gradient(90deg, rgba(255,255,255,0.98), rgba(247,250,252,0.98));
+  border-top: 1px solid rgba(2,6,23,0.04);
+}
+
+@media (max-width: 700px) {
+  .topbar-band {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+}
+
 .brand {
   display: flex;
   align-items: center;
