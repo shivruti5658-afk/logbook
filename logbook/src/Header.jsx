@@ -16,11 +16,7 @@ export default function Header({ theme, setTheme, themeVars }) {
           <div className="brand-content">
             <span className="brand-tag">AEROLOG PRO</span>
 
-            <h1 className="brand-title">Aviation Maintenance Logbook</h1>
-
-            <p className="brand-subtitle">
-              Digital Aircraft Maintenance Records & Work Tracking
-            </p>
+            <h1 className="brand-title">WORK LOG @ HORIZON</h1>
           </div>
         </div>
 
@@ -41,9 +37,7 @@ export default function Header({ theme, setTheme, themeVars }) {
 
       <div className="premium-status-bar">
         <span className="status-dot"></span>
-        <span>WORK LOG MANAGEMENT SYSTEM</span>
-        <span className="separator">•</span>
-        <span>HORIZON AVIATION</span>
+        <span>BRAKES ASSEMBLY AND DISASSEMBLY</span>
       </div>
     </header>
   );
