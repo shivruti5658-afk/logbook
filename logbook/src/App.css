@@ -151,6 +151,13 @@ body,
   backdrop-filter: blur(18px);
 }
 
+/* Use a light-friendly glass style when the app is in light theme */
+.theme-light .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(2, 132, 199, 0.08);
+  backdrop-filter: none;
+}
+
 .page-content {
   max-width: 1180px;
   margin: 0 auto;

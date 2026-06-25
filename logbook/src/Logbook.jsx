@@ -502,7 +502,27 @@ export default function Logbook() {
       doc.internal.pageSize.getHeight(),
       40,
     );
-    doc.save(filename);
+    // Prefer opening/sharing a blob URL on mobile browsers where direct
+    // downloads may be blocked; fall back to doc.save when needed.
+    try {
+      const blob = doc.output("blob");
+      const file = new File([blob], filename, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: filename });
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+      if (!win) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    } catch (err) {
+      doc.save(filename);
+    }
   }
 
   function exportAllEntriesPdf() {
@@ -518,7 +538,26 @@ export default function Logbook() {
         40,
       );
     });
-    doc.save("aerolog-entries.pdf");
+    try {
+      const blob = doc.output("blob");
+      const filename = "aerolog-entries.pdf";
+      const file = new File([blob], filename, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: filename });
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+      if (!win) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "aerolog-entries.pdf";
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    } catch (err) {
+      doc.save("aerolog-entries.pdf");
+    }
   }
 
   function exportEntryImage(entry, filename) {
