@@ -8,7 +8,7 @@
   --warning: #f59e0b;
   --text: #f8fafc;
   --muted: #94a3b8;
-  --border: rgba(255,255,255,0.12);
+  --border: rgba(255, 255, 255, 0.12);
   --radius: 20px;
   --shadow: 0 28px 80px rgba(0, 0, 0, 0.22);
 }
@@ -34,7 +34,15 @@ body,
 .aerolog-root {
   margin: 0;
   min-height: 100vh;
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   background: var(--primary-bg);
   color: var(--text);
 }
@@ -53,6 +61,9 @@ body,
   padding: 20px 24px;
   background: rgba(7, 17, 31, 0.96);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition:
+    padding 200ms ease,
+    background-color 200ms ease;
 }
 
 .topbar-inner {
@@ -64,10 +75,34 @@ body,
   gap: 20px;
 }
 
+/* Premium-looking topbar variants */
+.topbar {
+  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.theme-light .topbar {
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0.98),
+    rgba(248, 250, 252, 0.95)
+  );
+  border-bottom: 1px solid rgba(2, 6, 23, 0.06);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.brand-sub {
+  letter-spacing: 0.22em;
+}
+
+.brand-title {
+  font-weight: 800;
 }
 
 .brand-sub {
@@ -108,7 +143,9 @@ body,
   border-radius: 14px;
   padding: 12px 18px;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .primary-btn:hover {
@@ -123,7 +160,9 @@ body,
   border-radius: 14px;
   padding: 12px 18px;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .secondary-btn:hover {
@@ -383,6 +422,41 @@ body,
   }
   .form-row,
   .detail-grid {
+    .topbar {
+      padding: 12px 16px;
+    }
+    .topbar-inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .brand {
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-sub {
+      font-size: 11px;
+    }
+    .brand-title {
+      font-size: 1rem;
+    }
+    .topbar-actions {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+    .topbar-actions .topbar-date {
+      display: none; /* conserve space on small screens */
+    }
+    .topbar-actions .primary-btn,
+    .topbar-actions .secondary-btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+    }
     grid-template-columns: 1fr;
   }
 }
