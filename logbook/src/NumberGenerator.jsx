@@ -89,7 +89,7 @@ export default function NumberGenerator({ navigateTo }) {
     try {
       const { data, error } = await supabase
         .from("generator_sessions")
-        .select("id, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at")
+        .select("id, session_name, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -170,7 +170,7 @@ export default function NumberGenerator({ navigateTo }) {
 
       const { data: generatedData, error: generatedError } = await supabase
         .from("generated_numbers")
-        .select("generated_number, generated_at")
+        .select("generated_number, generated_at, is_checked")
         .eq("session_id", sessionId)
         .order("generated_at", { ascending: true });
 
@@ -179,7 +179,7 @@ export default function NumberGenerator({ navigateTo }) {
       const generatedList = (generatedData || []).map((entry) => ({
         generated_number: Number(entry.generated_number),
         generated_at: entry.generated_at,
-        is_checked: false,
+        is_checked: entry.is_checked ?? false,
       }));
       const usedNumbers = new Set(generatedList.map((entry) => entry.generated_number));
       const fullRange = buildFullRange(
@@ -233,6 +233,7 @@ export default function NumberGenerator({ navigateTo }) {
       const sessionId = crypto.randomUUID();
       const sessionPayload = {
         id: sessionId,
+        session_name: name,
         min_value: min,
         max_value: max,
         total_numbers: total,
@@ -515,6 +516,8 @@ export default function NumberGenerator({ navigateTo }) {
     setNotice("Export ready in the dashboard workflow.");
   }
 
+  const lastEntry = generatedNumbers.length ? generatedNumbers[generatedNumbers.length - 1] : null;
+
   return (
     <div className="generator-page">
       <div className="generator-shell">
@@ -574,6 +577,17 @@ export default function NumberGenerator({ navigateTo }) {
             <div className="generator-session-name">{session?.session_name || sessionName}</div>
             <div className="generator-display-label">Current Generated Number</div>
             <div className="generator-display-number">{currentNumber ?? "—"}</div>
+            <div className="current-number-check" style={{ marginTop: 10 }}>
+              <label className="recent-chip-check">
+                <input
+                  type="checkbox"
+                  checked={Boolean(lastEntry?.is_checked)}
+                  disabled={!lastEntry}
+                  onChange={() => lastEntry && void handleToggleChecked(lastEntry)}
+                />
+                <span style={{ marginLeft: 8 }}>{lastEntry ? "Checked" : ""}</span>
+              </label>
+            </div>
             <div className="generator-actions">
               <button className="primary-btn" onClick={handleGenerateNumber} disabled={generating || !session}>
                 {generating ? "Generating..." : "Generate Number"}
