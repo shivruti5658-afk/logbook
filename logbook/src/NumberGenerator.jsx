@@ -705,7 +705,7 @@ export default function NumberGenerator({ navigateTo }) {
         }
 
         doc.setFontSize(12);
-        doc.setFont("helvetica");
+        doc.setFont("helvetica", "bold");
         doc.setTextColor(15, 23, 42);
         doc.text(`• ${row.number}`, 14, y);
 
