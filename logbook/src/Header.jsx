@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Header({ theme, setTheme, themeVars }) {
+export default function Header({ theme, setTheme, themeVars, navigateTo }) {
   const today = new Date().toLocaleDateString("en-US", {
     day: "2-digit",
     month: "short",
@@ -25,6 +25,10 @@ export default function Header({ theme, setTheme, themeVars }) {
             <span className="date-label">TODAY</span>
             <span className="date-value">{today}</span>
           </div>
+
+          <button className="secondary-btn" onClick={() => navigateTo?.("/number-generator")}>
+            Number Generator
+          </button>
 
           <button
             className="theme-btn"

@@ -237,7 +237,7 @@ function buildImageFromEntry(entry) {
   return canvas.toDataURL("image/png");
 }
 
-export default function Logbook() {
+export default function Logbook({ routePath: controlledRoutePath, setRoutePath: setControlledRoutePath, navigateTo }) {
   const [entries, setEntries] = useState([]);
   const [newEntry, setNewEntry] = useState({
     date: "",
@@ -256,7 +256,7 @@ export default function Logbook() {
   const [toast, setToast] = useState("");
   const [search, setSearch] = useState("");
   const [draftAvailable, setDraftAvailable] = useState(false);
-  const [routePath, setRoutePath] = useState(window.location.pathname);
+  const [routePath, setRoutePath] = useState(controlledRoutePath ?? window.location.pathname);
   const [theme, setTheme] = useState("dark");
   const descRef = useRef(null);
 
@@ -289,7 +289,11 @@ export default function Logbook() {
   useEffect(() => {
     loadEntries();
     loadDraft();
-    window.onpopstate = () => setRoutePath(window.location.pathname);
+    window.onpopstate = () => {
+      const nextPath = window.location.pathname;
+      setRoutePath(nextPath);
+      setControlledRoutePath?.(nextPath);
+    };
   }, []);
 
   useEffect(() => {
@@ -505,8 +509,13 @@ export default function Logbook() {
   }
 
   function navigate(path) {
-    window.history.pushState({}, "", path);
-    setRoutePath(path);
+    if (navigateTo) {
+      navigateTo(path);
+    } else {
+      window.history.pushState({}, "", path);
+      setRoutePath(path);
+      setControlledRoutePath?.(path);
+    }
   }
 
   function exportEntryPdf(entry, filename) {
@@ -609,7 +618,7 @@ export default function Logbook() {
     <div
       className={`aerolog-root ${theme === "dark" ? "theme-dark" : "theme-light"}`}
     >
-      <Header theme={theme} setTheme={setTheme} themeVars={themeVars} />
+      <Header theme={theme} setTheme={setTheme} themeVars={themeVars} navigateTo={navigateTo} />
 
       <div className="page-content">
         <div className="page-header">
