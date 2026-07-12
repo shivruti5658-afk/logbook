@@ -74,6 +74,7 @@ export default function NumberGenerator({ navigateTo }) {
   const [generating, setGenerating] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [savedSessions, setSavedSessions] = useState([]);
+  const [theme, setTheme] = useState("dark");
 
   const totalNumbers = useMemo(() => {
     const min = Number(minValue);
@@ -130,6 +131,20 @@ export default function NumberGenerator({ navigateTo }) {
       }
     } catch (error) {
       console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.className = theme === "dark" ? "" : "theme-light";
+    window.localStorage.setItem("aerolog-number-generator-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem(
+      "aerolog-number-generator-theme",
+    );
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setTheme(savedTheme);
     }
   }, []);
 
@@ -728,9 +743,16 @@ export default function NumberGenerator({ navigateTo }) {
             </div>
           </div>
 
-          <div className="generator-nav">
-            <button className="secondary-btn" onClick={() => navigateTo?.("/")}>
+          <div className="generator-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+            <button className="secondary-btn" onClick={() => navigateTo?.("/") }>
               Back to Logbook
+            </button>
+            <button
+              className="theme-btn"
+              type="button"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? "☀ Light" : "🌙 Dark"}
             </button>
           </div>
 
@@ -865,14 +887,15 @@ export default function NumberGenerator({ navigateTo }) {
                         </small>
                       </div>
                       <button
-                        className="delete-btn"
+                        className="delete-btn icon-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           void handleDeleteSession(item.id);
                         }}
                         aria-label="Delete session"
+                        title="Delete session"
                       >
-                        Delete
+                        ✕
                       </button>
                     </div>
                   </div>
@@ -904,11 +927,13 @@ export default function NumberGenerator({ navigateTo }) {
                       </label>
                       <small>{formatTimestamp(entry.generated_at)}</small>
                       <button
-                        className="delete-btn"
+                        className="delete-btn icon-btn"
                         style={{ position: "absolute", top: 8, right: 8 }}
                         onClick={() => void handleDeleteNumber(entry)}
+                        aria-label="Delete number"
+                        title="Delete number"
                       >
-                        Delete
+                        ✕
                       </button>
                     </div>
                   ))}

@@ -400,7 +400,9 @@ body,
 .generator-page {
   min-height: 100vh;
   padding: 24px;
-  background: radial-gradient(circle at top, rgba(37, 99, 235, 0.18), transparent 42%), var(--primary-bg);
+  background:
+    radial-gradient(circle at top, rgba(37, 99, 235, 0.18), transparent 42%),
+    var(--primary-bg);
 }
 
 .generator-shell {
@@ -409,7 +411,11 @@ body,
 }
 
 .generator-card {
-  background: linear-gradient(145deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.95));
+  background: linear-gradient(
+    145deg,
+    rgba(17, 24, 39, 0.98),
+    rgba(15, 23, 42, 0.95)
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
   box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
@@ -759,6 +765,20 @@ body,
   background: rgba(255, 107, 53, 0.08);
   color: var(--accent);
   border: 1px solid rgba(255, 107, 53, 0.24);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.delete-btn.icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 12px;
+  font-size: 1rem;
 }
 
 .card {
@@ -1067,38 +1087,42 @@ body,
 .theme-light .generator-card {
   background: linear-gradient(180deg, #ffffff, #f8fafc);
   border: 1px solid rgba(2, 6, 23, 0.06);
-  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
 }
 
 .theme-light .generator-display-card,
 .theme-light .generator-progress-card,
 .theme-light .generator-panel {
   background: #ffffff;
-  border: 1px solid rgba(2,6,23,0.04);
+  border: 1px solid rgba(2, 6, 23, 0.04);
 }
 
 .theme-light .generator-badge {
-  background: linear-gradient(90deg, rgba(14,165,233,0.12), rgba(2,132,199,0.06));
+  background: linear-gradient(
+    90deg,
+    rgba(14, 165, 233, 0.12),
+    rgba(2, 132, 199, 0.06)
+  );
   color: #0b4a66;
-  border: 1px solid rgba(2,132,199,0.06);
+  border: 1px solid rgba(2, 132, 199, 0.06);
 }
 
 .theme-light .primary-btn {
   background: linear-gradient(90deg, #0ea5e9, #0284c7);
   color: #fff;
-  box-shadow: 0 6px 18px rgba(2,132,199,0.12);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.12);
 }
 
 .theme-light .secondary-btn {
   background: #f1f5f9;
   color: #0f172a;
-  border: 1px solid rgba(2,6,23,0.04);
+  border: 1px solid rgba(2, 6, 23, 0.04);
 }
 
 .theme-light .input,
 .theme-light .textarea {
   background: #ffffff;
-  border: 1px solid rgba(2,6,23,0.06);
+  border: 1px solid rgba(2, 6, 23, 0.06);
   color: #0f172a;
 }
 
@@ -1108,20 +1132,22 @@ body,
 
 .theme-light .recent-chip {
   background: linear-gradient(180deg, #ffffff, #f8fafc);
-  border: 1px solid rgba(2,6,23,0.04);
+  border: 1px solid rgba(2, 6, 23, 0.04);
   color: #0f172a;
 }
 
 .theme-light .empty-state {
   background: linear-gradient(180deg, #ffffff, #fbfdff);
-  border: 1px dashed rgba(2,6,23,0.04);
+  border: 1px dashed rgba(2, 6, 23, 0.04);
 }
 
 /* Additional premium mobile-friendly tweaks for Number Generator */
 .generator-card {
   max-width: 980px;
   margin: 0 auto;
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .generator-card:hover {
@@ -1148,9 +1174,13 @@ body,
 }
 
 .generator-badge {
-  background: linear-gradient(90deg, rgba(56,189,248,0.14), rgba(34,197,94,0.08));
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.14),
+    rgba(34, 197, 94, 0.08)
+  );
   color: #e6f4ff;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .generator-display-number {
@@ -1162,7 +1192,11 @@ body,
   min-width: 100px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(37,99,235,0.06));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(37, 99, 235, 0.06)
+  );
 }
 
 .recent-chip-check input {
