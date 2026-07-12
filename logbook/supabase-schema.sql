@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.logbook_entries (
 CREATE TABLE IF NOT EXISTS public.generator_sessions (
   id uuid PRIMARY KEY,
   user_id uuid,
+  session_name text NOT NULL DEFAULT 'Untitled Session',
   min_value integer NOT NULL,
   max_value integer NOT NULL,
   total_numbers integer NOT NULL,
@@ -34,11 +35,18 @@ CREATE TABLE IF NOT EXISTS public.generated_numbers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id uuid NOT NULL REFERENCES public.generator_sessions(id) ON DELETE CASCADE,
   generated_number integer NOT NULL,
-  generated_at timestamptz NOT NULL DEFAULT now()
+  generated_at timestamptz NOT NULL DEFAULT now(),
+  is_checked boolean NOT NULL DEFAULT false
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS generated_numbers_session_number_idx
   ON public.generated_numbers (session_id, generated_number);
+
+ALTER TABLE public.generator_sessions
+ADD COLUMN IF NOT EXISTS session_name text DEFAULT 'Untitled Session';
+
+ALTER TABLE public.generated_numbers
+ADD COLUMN IF NOT EXISTS is_checked boolean DEFAULT false;
 
 -- Trigger to keep updated_at in sync on row updates.
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()

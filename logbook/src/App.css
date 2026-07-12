@@ -1029,3 +1029,89 @@ body,
     text-align: left;
   }
 }
+
+/* Additional premium mobile-friendly tweaks for Number Generator */
+.generator-card {
+  max-width: 980px;
+  margin: 0 auto;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.generator-card:hover {
+  transform: translateY(-6px);
+}
+
+.section-tag {
+  font-size: 0.78rem;
+  color: #93c5fd;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin-bottom: 8px;
+}
+
+.field-group .field-label {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.input {
+  width: 100%;
+  font-size: 1rem;
+  padding: 12px 14px;
+}
+
+.generator-badge {
+  background: linear-gradient(90deg, rgba(56,189,248,0.14), rgba(34,197,94,0.08));
+  color: #e6f4ff;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.generator-display-number {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.recent-chip {
+  min-width: 100px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(37,99,235,0.06));
+}
+
+.recent-chip-check input {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 480px) {
+  .generator-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .generator-hero {
+    gap: 12px;
+  }
+
+  .generator-hero h2 {
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+
+  .generator-hero p {
+    font-size: 0.92rem;
+  }
+
+  .generator-display-number {
+    font-size: clamp(1.8rem, 18vw, 3.2rem);
+  }
+
+  .generator-actions .primary-btn,
+  .generator-actions .secondary-btn {
+    width: 100%;
+  }
+
+  .generator-grid {
+    grid-template-columns: 1fr;
+  }
+}

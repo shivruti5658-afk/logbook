@@ -89,11 +89,15 @@ export default function NumberGenerator({ navigateTo }) {
     try {
       const { data, error } = await supabase
         .from("generator_sessions")
-        .select("id, session_name, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at")
+        .select("id, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setSavedSessions((data || []).length ? data : readLocalSessions());
+      const remoteSessions = (data || []).map((item) => ({
+        ...item,
+        session_name: item.session_name || "Untitled Session",
+      }));
+      setSavedSessions(remoteSessions.length ? remoteSessions : readLocalSessions());
     } catch (error) {
       console.error(error);
       setSavedSessions(readLocalSessions());
@@ -166,7 +170,7 @@ export default function NumberGenerator({ navigateTo }) {
 
       const { data: generatedData, error: generatedError } = await supabase
         .from("generated_numbers")
-        .select("generated_number, generated_at, is_checked")
+        .select("generated_number, generated_at")
         .eq("session_id", sessionId)
         .order("generated_at", { ascending: true });
 
@@ -175,7 +179,7 @@ export default function NumberGenerator({ navigateTo }) {
       const generatedList = (generatedData || []).map((entry) => ({
         generated_number: Number(entry.generated_number),
         generated_at: entry.generated_at,
-        is_checked: Boolean(entry.is_checked),
+        is_checked: false,
       }));
       const usedNumbers = new Set(generatedList.map((entry) => entry.generated_number));
       const fullRange = buildFullRange(
@@ -229,7 +233,6 @@ export default function NumberGenerator({ navigateTo }) {
       const sessionId = crypto.randomUUID();
       const sessionPayload = {
         id: sessionId,
-        session_name: name,
         min_value: min,
         max_value: max,
         total_numbers: total,
@@ -242,6 +245,7 @@ export default function NumberGenerator({ navigateTo }) {
 
       const localSession = {
         ...sessionPayload,
+        session_name: name,
         generated_numbers: [],
         remaining_pool: fullRange,
         current_number: null,
@@ -333,7 +337,6 @@ export default function NumberGenerator({ navigateTo }) {
               session_id: session.id,
               generated_number: nextNumber,
               generated_at: newEntry.generated_at,
-              is_checked: false,
             },
           ]);
 
