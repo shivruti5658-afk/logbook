@@ -237,7 +237,11 @@ function buildImageFromEntry(entry) {
   return canvas.toDataURL("image/png");
 }
 
-export default function Logbook({ routePath: controlledRoutePath, setRoutePath: setControlledRoutePath, navigateTo }) {
+export default function Logbook({
+  routePath: controlledRoutePath,
+  setRoutePath: setControlledRoutePath,
+  navigateTo,
+}) {
   const [entries, setEntries] = useState([]);
   const [newEntry, setNewEntry] = useState({
     date: "",
@@ -256,7 +260,9 @@ export default function Logbook({ routePath: controlledRoutePath, setRoutePath: 
   const [toast, setToast] = useState("");
   const [search, setSearch] = useState("");
   const [draftAvailable, setDraftAvailable] = useState(false);
-  const [routePath, setRoutePath] = useState(controlledRoutePath ?? window.location.pathname);
+  const [routePath, setRoutePath] = useState(
+    controlledRoutePath ?? window.location.pathname,
+  );
   const [theme, setTheme] = useState("dark");
   const descRef = useRef(null);
 
@@ -618,7 +624,12 @@ export default function Logbook({ routePath: controlledRoutePath, setRoutePath: 
     <div
       className={`aerolog-root ${theme === "dark" ? "theme-dark" : "theme-light"}`}
     >
-      <Header theme={theme} setTheme={setTheme} themeVars={themeVars} navigateTo={navigateTo} />
+      <Header
+        theme={theme}
+        setTheme={setTheme}
+        themeVars={themeVars}
+        navigateTo={navigateTo}
+      />
 
       <div className="page-content">
         <div className="page-header">

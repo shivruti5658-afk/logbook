@@ -74,7 +74,10 @@ export default function NumberGenerator({ navigateTo }) {
   const [generating, setGenerating] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [savedSessions, setSavedSessions] = useState([]);
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(() => {
+    const saved = window.localStorage.getItem("aerolog-number-generator-theme");
+    return saved === "light" || saved === "dark" ? saved : "dark";
+  });
 
   const totalNumbers = useMemo(() => {
     const min = Number(minValue);
@@ -138,15 +141,6 @@ export default function NumberGenerator({ navigateTo }) {
     document.documentElement.className = theme === "dark" ? "" : "theme-light";
     window.localStorage.setItem("aerolog-number-generator-theme", theme);
   }, [theme]);
-
-  useEffect(() => {
-    const savedTheme = window.localStorage.getItem(
-      "aerolog-number-generator-theme",
-    );
-    if (savedTheme === "light" || savedTheme === "dark") {
-      setTheme(savedTheme);
-    }
-  }, []);
 
   useEffect(() => {
     if (!session?.id) return;
@@ -675,50 +669,86 @@ export default function NumberGenerator({ navigateTo }) {
     }
 
     if (type === "pdf") {
+      const toRoman = (num) => {
+        const romans = [
+          [1000, "M"],
+          [900, "CM"],
+          [500, "D"],
+          [400, "CD"],
+          [100, "C"],
+          [90, "XC"],
+          [50, "L"],
+          [40, "XL"],
+          [10, "X"],
+          [9, "IX"],
+          [5, "V"],
+          [4, "IV"],
+          [1, "I"],
+        ];
+        return romans.reduce((acc, [value, symbol]) => {
+          const repeat = Math.floor(num / value);
+          if (repeat > 0) {
+            acc += symbol.repeat(repeat);
+            num -= value * repeat;
+          }
+          return acc;
+        }, "");
+      };
+
       const doc = new jsPDF();
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, 210, 40, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.text(exportName, 14, 20);
-      doc.setFontSize(11);
-      doc.text(
-        `Range: ${session?.min_value ?? minValue} to ${session?.max_value ?? maxValue}`,
-        14,
-        32,
-      );
-
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(13);
-      doc.text("Generated Numbers", 14, 54);
-      doc.setFont("helvetica", "bold");
-      rows.forEach((row, index) => {
-        const y = 68 + index * 12;
-        doc.setFontSize(16);
+      const pageTitleY = 20;
+      const pageSubtitleY = 32;
+      const contentStartY = 54;
+      let y = contentStartY;
+      const bottomMargin = 282;
+      const pageHeader = (title) => {
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, 210, 40, "F");
+        doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.text(exportName, 14, pageTitleY);
+        doc.setFontSize(11);
+        doc.text(
+          `Range: ${session?.min_value ?? minValue} to ${session?.max_value ?? maxValue}`,
+          14,
+          pageSubtitleY,
+        );
         doc.setTextColor(15, 23, 42);
-        doc.text(`${index + 1}. ${row.number}`, 14, y);
+        doc.setFontSize(13);
+        doc.setFont("helvetica", "bold");
+        doc.text(title, 14, contentStartY);
+      };
 
-        // status label: green bold for checked, red bold for unchecked
-        if (row.is_checked) {
-          doc.setFontSize(11);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(34, 197, 94); // green
-          doc.text(`✓ Checked`, 40, y);
-        } else {
-          doc.setFontSize(11);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(239, 68, 68); // red
-          doc.text(`✗ Pending`, 40, y);
+      pageHeader("Generated Numbers");
+      y += 10;
+
+      rows.forEach((row, index) => {
+        if (y > bottomMargin) {
+          doc.addPage();
+          pageHeader("Generated Numbers (cont.)");
+          y = contentStartY + 10;
         }
 
-        // timestamp on the next line in muted color
-        doc.setFontSize(9);
+        const romanIndex = toRoman(index + 1);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
+        doc.text(`${romanIndex}. ${row.number}`, 14, y);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(row.is_checked ? 34 : 239, row.is_checked ? 197 : 68, row.is_checked ? 94 : 68);
+        doc.text(row.is_checked ? "✓ Checked" : "✗ Pending", 100, y);
+
+        doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(112, 122, 138);
-        doc.text(`${row.generated_at}`, 40, y + 6);
+        doc.text(`${row.generated_at}`, 14, y + 6);
+
+        y += 10;
       });
+
       doc.save(`${exportFileName}.pdf`);
       setNotice("PDF exported.");
       return;
@@ -743,9 +773,17 @@ export default function NumberGenerator({ navigateTo }) {
             </div>
           </div>
 
-          <div className="generator-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-            <button className="secondary-btn" onClick={() => navigateTo?.("/") }>
-              Back to Logbook
+          <div
+            className="generator-nav"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <button className="secondary-btn" onClick={() => navigateTo?.("/")}>
+              Back
             </button>
             <button
               className="theme-btn"

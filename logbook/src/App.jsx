@@ -21,7 +21,13 @@ function App() {
     return <NumberGenerator navigateTo={navigateTo} />;
   }
 
-  return <Logbook routePath={routePath} setRoutePath={setRoutePath} navigateTo={navigateTo} />;
+  return (
+    <Logbook
+      routePath={routePath}
+      setRoutePath={setRoutePath}
+      navigateTo={navigateTo}
+    />
+  );
 }
 
 export default App;

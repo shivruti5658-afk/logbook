@@ -26,7 +26,10 @@ export default function Header({ theme, setTheme, themeVars, navigateTo }) {
             <span className="date-value">{today}</span>
           </div>
 
-          <button className="secondary-btn" onClick={() => navigateTo?.("/number-generator")}>
+          <button
+            className="secondary-btn"
+            onClick={() => navigateTo?.("/number-generator")}
+          >
             Number Generator
           </button>
 

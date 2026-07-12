@@ -581,7 +581,7 @@ body,
 
 .saved-session-item {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   border-radius: 16px;
@@ -600,7 +600,21 @@ body,
 
 .saved-session-item span,
 .saved-session-item small {
-  color: #cbd5e1;
+  color: var(--text);
+}
+
+.theme-light .saved-session-item {
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  background: #ffffff;
+}
+
+.theme-light .saved-session-item:hover {
+  background: #f1f5f9;
+}
+
+.theme-light .saved-session-item span,
+.theme-light .saved-session-item small {
+  color: #0f172a;
 }
 
 .panel-title {
@@ -1095,6 +1109,20 @@ body,
 .theme-light .generator-panel {
   background: #ffffff;
   border: 1px solid rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+}
+
+.theme-light .generator-display-number,
+.theme-light .generator-session-name,
+.theme-light .generator-display-label,
+.theme-light .panel-title,
+.theme-light .search-state,
+.theme-light .recent-chip span,
+.theme-light .recent-chip small,
+.theme-light .progress-meta,
+.theme-light .progress-meta span,
+.theme-light .generator-status {
+  color: #0f172a;
 }
 
 .theme-light .generator-badge {
