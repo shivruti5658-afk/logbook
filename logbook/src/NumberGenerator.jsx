@@ -669,32 +669,6 @@ export default function NumberGenerator({ navigateTo }) {
     }
 
     if (type === "pdf") {
-      const toRoman = (num) => {
-        const romans = [
-          [1000, "M"],
-          [900, "CM"],
-          [500, "D"],
-          [400, "CD"],
-          [100, "C"],
-          [90, "XC"],
-          [50, "L"],
-          [40, "XL"],
-          [10, "X"],
-          [9, "IX"],
-          [5, "V"],
-          [4, "IV"],
-          [1, "I"],
-        ];
-        return romans.reduce((acc, [value, symbol]) => {
-          const repeat = Math.floor(num / value);
-          if (repeat > 0) {
-            acc += symbol.repeat(repeat);
-            num -= value * repeat;
-          }
-          return acc;
-        }, "");
-      };
-
       const doc = new jsPDF();
       const pageTitleY = 20;
       const pageSubtitleY = 32;
@@ -730,11 +704,10 @@ export default function NumberGenerator({ navigateTo }) {
           y = contentStartY + 10;
         }
 
-        const romanIndex = toRoman(index + 1);
         doc.setFontSize(12);
         doc.setFont("helvetica");
         doc.setTextColor(15, 23, 42);
-        doc.text(`${romanIndex}. ${row.number}`, 14, y);
+        doc.text(`• ${row.number}`, 14, y);
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
