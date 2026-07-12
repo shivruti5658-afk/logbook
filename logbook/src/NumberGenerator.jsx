@@ -29,10 +29,18 @@ function formatTimestamp(value) {
       });
 }
 
+function sanitizeFileName(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "number-generator";
+}
+
 export default function NumberGenerator({ navigateTo }) {
   const [minValue, setMinValue] = useState("1");
   const [maxValue, setMaxValue] = useState("100");
   const [session, setSession] = useState(null);
+  const [sessionName, setSessionName] = useState("My Session");
   const [generatedNumbers, setGeneratedNumbers] = useState([]);
   const [remainingPool, setRemainingPool] = useState([]);
   const [currentNumber, setCurrentNumber] = useState(null);
@@ -42,6 +50,7 @@ export default function NumberGenerator({ navigateTo }) {
   const [creatingSession, setCreatingSession] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [savedSessions, setSavedSessions] = useState([]);
 
   const totalNumbers = useMemo(() => {
     const min = Number(minValue);
@@ -61,7 +70,23 @@ export default function NumberGenerator({ navigateTo }) {
     [generatedNumbers],
   );
 
+  const loadSavedSessions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("generator_sessions")
+        .select("id, session_name, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setSavedSessions(data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
+    void loadSavedSessions();
+
     const cached = window.localStorage.getItem(SESSION_STORAGE_KEY);
     if (!cached) return;
 
@@ -80,6 +105,7 @@ export default function NumberGenerator({ navigateTo }) {
 
     const payload = {
       sessionId: session.id,
+      sessionName: session.session_name || sessionName,
       minValue: session.min_value,
       maxValue: session.max_value,
       currentNumber,
@@ -122,7 +148,7 @@ export default function NumberGenerator({ navigateTo }) {
 
       const { data: generatedData, error: generatedError } = await supabase
         .from("generated_numbers")
-        .select("generated_number, generated_at")
+        .select("generated_number, generated_at, is_checked")
         .eq("session_id", sessionId)
         .order("generated_at", { ascending: true });
 
@@ -131,6 +157,7 @@ export default function NumberGenerator({ navigateTo }) {
       const generatedList = (generatedData || []).map((entry) => ({
         generated_number: Number(entry.generated_number),
         generated_at: entry.generated_at,
+        is_checked: Boolean(entry.is_checked),
       }));
       const usedNumbers = new Set(generatedList.map((entry) => entry.generated_number));
       const fullRange = buildFullRange(
@@ -139,6 +166,7 @@ export default function NumberGenerator({ navigateTo }) {
       );
       const remaining = fullRange.filter((number) => !usedNumbers.has(number));
       setSession(sessionData);
+      setSessionName(sessionData.session_name || "Untitled Session");
       setGeneratedNumbers(generatedList);
       setRemainingPool(shuffle(remaining));
       setCurrentNumber(generatedList.at(-1)?.generated_number ?? null);
@@ -168,8 +196,10 @@ export default function NumberGenerator({ navigateTo }) {
     try {
       const total = max - min + 1;
       const fullRange = shuffle(buildFullRange(min, max));
+      const name = sessionName.trim() || "Untitled Session";
       const sessionPayload = {
         id: crypto.randomUUID(),
+        session_name: name,
         min_value: min,
         max_value: max,
         total_numbers: total,
@@ -189,10 +219,12 @@ export default function NumberGenerator({ navigateTo }) {
       if (sessionError) throw sessionError;
 
       setSession(createdSession);
+      setSessionName(name);
       setGeneratedNumbers([]);
       setRemainingPool(fullRange);
       setCurrentNumber(null);
-      setNotice(`Session ready. ${total} numbers available.`);
+      await loadSavedSessions();
+      setNotice(`Session "${name}" ready. ${total} numbers available.`);
     } catch (error) {
       console.error(error);
       setNotice("The session could not be created. Please check Supabase.");
@@ -219,6 +251,7 @@ export default function NumberGenerator({ navigateTo }) {
       const newEntry = {
         generated_number: nextNumber,
         generated_at: new Date().toISOString(),
+        is_checked: false,
       };
 
       const nextGeneratedNumbers = [...generatedNumbers, newEntry];
@@ -232,6 +265,7 @@ export default function NumberGenerator({ navigateTo }) {
             session_id: session.id,
             generated_number: nextNumber,
             generated_at: newEntry.generated_at,
+            is_checked: false,
           },
         ]);
 
@@ -267,20 +301,28 @@ export default function NumberGenerator({ navigateTo }) {
       return;
     }
 
-    const confirmed = window.confirm("Reset this session? This will clear the current generator state.");
+    const confirmed = window.confirm("Archive the current session and clear the active view?");
     if (!confirmed) return;
 
     setResetting(true);
     try {
-      await supabase.from("generated_numbers").delete().eq("session_id", session.id);
-      await supabase.from("generator_sessions").delete().eq("id", session.id);
+      await supabase
+        .from("generator_sessions")
+        .update({
+          status: "completed",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", session.id);
+
       setSession(null);
+      setSessionName("My Session");
       setGeneratedNumbers([]);
       setRemainingPool([]);
       setCurrentNumber(null);
       setSearchValue("");
       window.localStorage.removeItem(SESSION_STORAGE_KEY);
-      setNotice("Session reset. Create a new one to continue.");
+      await loadSavedSessions();
+      setNotice("Session archived. Create a new one to continue.");
     } catch (error) {
       console.error(error);
       setNotice("The session could not be reset. Please try again.");
@@ -289,19 +331,50 @@ export default function NumberGenerator({ navigateTo }) {
     }
   }
 
+  async function handleLoadSavedSession(sessionId) {
+    await restoreSession(sessionId);
+  }
+
+  async function handleToggleChecked(entry) {
+    const nextValue = !entry.is_checked;
+    try {
+      const { error } = await supabase
+        .from("generated_numbers")
+        .update({ is_checked: nextValue })
+        .eq("session_id", session.id)
+        .eq("generated_number", entry.generated_number);
+
+      if (error) throw error;
+
+      setGeneratedNumbers((current) =>
+        current.map((item) =>
+          item.generated_number === entry.generated_number && item.generated_at === entry.generated_at
+            ? { ...item, is_checked: nextValue }
+            : item,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      setNotice("Unable to update the checkbox status.");
+    }
+  }
+
   function handleExport(type) {
     const rows = generatedNumbers.map((entry) => ({
       number: entry.generated_number,
       generated_at: entry.generated_at,
+      is_checked: entry.is_checked,
     }));
+    const exportName = session?.session_name || sessionName || "Number Generator Results";
+    const exportFileName = sanitizeFileName(exportName);
 
     if (type === "csv") {
-      const csv = ["number,generated_at", ...rows.map((row) => `${row.number},${row.generated_at}`)].join("\n");
+      const csv = ["number,generated_at,is_checked", ...rows.map((row) => `${row.number},${row.generated_at},${row.is_checked ? "true" : "false"}`)].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "number-generator-results.csv";
+      link.download = `${exportFileName}.csv`;
       link.click();
       URL.revokeObjectURL(url);
       setNotice("CSV exported.");
@@ -313,7 +386,7 @@ export default function NumberGenerator({ navigateTo }) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "number-generator-results.json";
+      link.download = `${exportFileName}.json`;
       link.click();
       URL.revokeObjectURL(url);
       setNotice("JSON exported.");
@@ -322,13 +395,28 @@ export default function NumberGenerator({ navigateTo }) {
 
     if (type === "pdf") {
       const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text("Number Generator Results", 14, 16);
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, 210, 40, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text(exportName, 14, 20);
       doc.setFontSize(11);
+      doc.text(`Range: ${session?.min_value ?? minValue} to ${session?.max_value ?? maxValue}`, 14, 32);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.text("Generated Numbers", 14, 54);
+      doc.setFont("helvetica", "bold");
       rows.forEach((row, index) => {
-        doc.text(`${index + 1}. ${row.number} — ${row.generated_at}`, 14, 28 + index * 8);
+        const y = 68 + index * 10;
+        doc.setFontSize(16);
+        doc.text(`${index + 1}. ${row.number}`, 14, y);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`${row.is_checked ? "✓ Checked" : "○ Pending"} • ${row.generated_at}`, 40, y + 2);
       });
-      doc.save("number-generator-results.pdf");
+      doc.save(`${exportFileName}.pdf`);
       setNotice("PDF exported.");
       return;
     }
@@ -359,6 +447,15 @@ export default function NumberGenerator({ navigateTo }) {
 
           <form className="generator-controls" onSubmit={handleCreateSession}>
             <div className="field-group">
+              <label className="field-label">Session Name</label>
+              <input
+                className="input"
+                placeholder="My Session"
+                value={sessionName}
+                onChange={(event) => setSessionName(event.target.value)}
+              />
+            </div>
+            <div className="field-group">
               <label className="field-label">Minimum Number</label>
               <input
                 className="input"
@@ -382,6 +479,8 @@ export default function NumberGenerator({ navigateTo }) {
           </form>
 
           <div className="generator-display-card">
+            <div className="generator-display-label">Current Session</div>
+            <div className="generator-session-name">{session?.session_name || sessionName}</div>
             <div className="generator-display-label">Current Generated Number</div>
             <div className="generator-display-number">{currentNumber ?? "—"}</div>
             <div className="generator-actions">
@@ -405,6 +504,29 @@ export default function NumberGenerator({ navigateTo }) {
             <div className="generator-status">{notice}</div>
           </div>
 
+          <div className="generator-panel">
+            <div className="panel-title">Saved Sessions</div>
+            {savedSessions.length === 0 ? (
+              <div className="empty-state">No saved sessions yet.</div>
+            ) : (
+              <div className="saved-session-list">
+                {savedSessions.map((item) => (
+                  <button
+                    key={item.id}
+                    className="saved-session-item"
+                    onClick={() => void handleLoadSavedSession(item.id)}
+                  >
+                    <strong>{item.session_name || "Untitled Session"}</strong>
+                    <span>{item.min_value} → {item.max_value}</span>
+                    <small>
+                      {item.generated_count} generated • {item.status}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="generator-grid">
             <div className="generator-panel">
               <div className="panel-title">Recent Numbers</div>
@@ -414,7 +536,14 @@ export default function NumberGenerator({ navigateTo }) {
                 <div className="recent-list">
                   {recentNumbers.map((entry) => (
                     <div key={`${entry.generated_number}-${entry.generated_at}`} className="recent-chip">
-                      <span>{entry.generated_number}</span>
+                      <label className="recent-chip-check">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(entry.is_checked)}
+                          onChange={() => void handleToggleChecked(entry)}
+                        />
+                        <span>{entry.generated_number}</span>
+                      </label>
                       <small>{formatTimestamp(entry.generated_at)}</small>
                     </div>
                   ))}
