@@ -7,7 +7,10 @@ const LOCAL_SESSIONS_STORAGE_KEY = "aerolog-number-generator-local-sessions";
 const RECENT_LIMIT = 20;
 
 function buildFullRange(minValue, maxValue) {
-  return Array.from({ length: maxValue - minValue + 1 }, (_, index) => minValue + index);
+  return Array.from(
+    { length: maxValue - minValue + 1 },
+    (_, index) => minValue + index,
+  );
 }
 
 function shuffle(values) {
@@ -31,10 +34,12 @@ function formatTimestamp(value) {
 }
 
 function sanitizeFileName(value) {
-  return String(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "") || "number-generator";
+  return (
+    String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || "number-generator"
+  );
 }
 
 function readLocalSessions() {
@@ -48,7 +53,10 @@ function readLocalSessions() {
 }
 
 function writeLocalSessions(sessions) {
-  window.localStorage.setItem(LOCAL_SESSIONS_STORAGE_KEY, JSON.stringify(sessions));
+  window.localStorage.setItem(
+    LOCAL_SESSIONS_STORAGE_KEY,
+    JSON.stringify(sessions),
+  );
 }
 
 export default function NumberGenerator({ navigateTo }) {
@@ -70,7 +78,8 @@ export default function NumberGenerator({ navigateTo }) {
   const totalNumbers = useMemo(() => {
     const min = Number(minValue);
     const max = Number(maxValue);
-    if (!Number.isInteger(min) || !Number.isInteger(max) || min >= max) return 0;
+    if (!Number.isInteger(min) || !Number.isInteger(max) || min >= max)
+      return 0;
     return max - min + 1;
   }, [minValue, maxValue]);
 
@@ -89,7 +98,9 @@ export default function NumberGenerator({ navigateTo }) {
     try {
       const { data, error } = await supabase
         .from("generator_sessions")
-        .select("id, session_name, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at")
+        .select(
+          "id, session_name, min_value, max_value, total_numbers, generated_count, remaining, status, created_at, updated_at",
+        )
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -97,7 +108,9 @@ export default function NumberGenerator({ navigateTo }) {
         ...item,
         session_name: item.session_name || "Untitled Session",
       }));
-      setSavedSessions(remoteSessions.length ? remoteSessions : readLocalSessions());
+      setSavedSessions(
+        remoteSessions.length ? remoteSessions : readLocalSessions(),
+      );
     } catch (error) {
       console.error(error);
       setSavedSessions(readLocalSessions());
@@ -134,7 +147,14 @@ export default function NumberGenerator({ navigateTo }) {
       totalNumbers,
     };
     window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
-  }, [session, currentNumber, generatedNumbers, remainingPool, sessionName, totalNumbers]);
+  }, [
+    session,
+    currentNumber,
+    generatedNumbers,
+    remainingPool,
+    sessionName,
+    totalNumbers,
+  ]);
 
   useEffect(() => {
     if (!searchValue.trim()) {
@@ -181,7 +201,9 @@ export default function NumberGenerator({ navigateTo }) {
         generated_at: entry.generated_at,
         is_checked: entry.is_checked ?? false,
       }));
-      const usedNumbers = new Set(generatedList.map((entry) => entry.generated_number));
+      const usedNumbers = new Set(
+        generatedList.map((entry) => entry.generated_number),
+      );
       const fullRange = buildFullRange(
         Number(sessionData.min_value),
         Number(sessionData.max_value),
@@ -192,7 +214,9 @@ export default function NumberGenerator({ navigateTo }) {
       setGeneratedNumbers(generatedList);
       setRemainingPool(shuffle(remaining));
       setCurrentNumber(generatedList.at(-1)?.generated_number ?? null);
-      setNotice(`Resumed session with ${generatedList.length} numbers generated.`);
+      setNotice(
+        `Resumed session with ${generatedList.length} numbers generated.`,
+      );
     } catch (error) {
       const localSessions = readLocalSessions();
       const localSession = localSessions.find((item) => item.id === sessionId);
@@ -202,7 +226,9 @@ export default function NumberGenerator({ navigateTo }) {
         setGeneratedNumbers(localSession.generated_numbers || []);
         setRemainingPool(localSession.remaining_pool || []);
         setCurrentNumber(localSession.current_number ?? null);
-        setNotice(`Resumed local session with ${localSession.generated_numbers?.length || 0} numbers generated.`);
+        setNotice(
+          `Resumed local session with ${localSession.generated_numbers?.length || 0} numbers generated.`,
+        );
         return;
       }
       console.error(error);
@@ -252,7 +278,10 @@ export default function NumberGenerator({ navigateTo }) {
         current_number: null,
       };
       const localSessions = readLocalSessions();
-      writeLocalSessions([localSession, ...localSessions.filter((item) => item.id !== sessionId)]);
+      writeLocalSessions([
+        localSession,
+        ...localSessions.filter((item) => item.id !== sessionId),
+      ]);
 
       try {
         const { data: createdSession, error: sessionError } = await supabase
@@ -269,7 +298,9 @@ export default function NumberGenerator({ navigateTo }) {
       } catch (syncError) {
         console.error(syncError);
         setSession(localSession);
-        setNotice(`Session "${name}" created locally. ${total} numbers available.`);
+        setNotice(
+          `Session "${name}" created locally. ${total} numbers available.`,
+        );
       }
 
       setSessionName(name);
@@ -377,7 +408,9 @@ export default function NumberGenerator({ navigateTo }) {
       return;
     }
 
-    const confirmed = window.confirm("Archive the current session and clear the active view?");
+    const confirmed = window.confirm(
+      "Archive the current session and clear the active view?",
+    );
     if (!confirmed) return;
 
     setResetting(true);
@@ -397,7 +430,13 @@ export default function NumberGenerator({ navigateTo }) {
       const localSessions = readLocalSessions();
       writeLocalSessions(
         localSessions.map((item) =>
-          item.id === session.id ? { ...item, status: "completed", updated_at: new Date().toISOString() } : item,
+          item.id === session.id
+            ? {
+                ...item,
+                status: "completed",
+                updated_at: new Date().toISOString(),
+              }
+            : item,
         ),
       );
 
@@ -437,7 +476,8 @@ export default function NumberGenerator({ navigateTo }) {
     }
 
     const updatedGeneratedNumbers = generatedNumbers.map((item) =>
-      item.generated_number === entry.generated_number && item.generated_at === entry.generated_at
+      item.generated_number === entry.generated_number &&
+      item.generated_at === entry.generated_at
         ? { ...item, is_checked: nextValue }
         : item,
     );
@@ -446,9 +486,133 @@ export default function NumberGenerator({ navigateTo }) {
     const localSessions = readLocalSessions();
     writeLocalSessions(
       localSessions.map((item) =>
-        item.id === session.id ? { ...item, generated_numbers: updatedGeneratedNumbers } : item,
+        item.id === session.id
+          ? { ...item, generated_numbers: updatedGeneratedNumbers }
+          : item,
       ),
     );
+  }
+
+  async function handleDeleteNumber(entry) {
+    if (!session?.id) return;
+    const confirmed = window.confirm(
+      `Delete number ${entry.generated_number} from this session?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      // remove from remote
+      try {
+        const { error } = await supabase
+          .from("generated_numbers")
+          .delete()
+          .match({
+            session_id: session.id,
+            generated_number: entry.generated_number,
+          });
+        if (error) throw error;
+      } catch (syncError) {
+        console.error("Remote delete failed", syncError);
+      }
+
+      // update local state
+      const updated = generatedNumbers.filter(
+        (item) =>
+          !(
+            item.generated_number === entry.generated_number &&
+            item.generated_at === entry.generated_at
+          ),
+      );
+      setGeneratedNumbers(updated);
+
+      // put number back into remaining pool
+      setRemainingPool((prev) => [...prev, entry.generated_number]);
+
+      // update local sessions store
+      const local = readLocalSessions().map((s) =>
+        s.id === session.id
+          ? {
+              ...s,
+              generated_numbers: updated,
+              remaining_pool: [
+                ...(s.remaining_pool || []),
+                entry.generated_number,
+              ],
+              generated_count: Math.max(0, (s.generated_count || 1) - 1),
+              remaining: (s.remaining || 0) + 1,
+            }
+          : s,
+      );
+      writeLocalSessions(local);
+
+      // update remote session counts (best-effort)
+      try {
+        await supabase
+          .from("generator_sessions")
+          .update({
+            generated_count: updated.length,
+            remaining:
+              session?.max_value && session?.min_value
+                ? Number(session.max_value) -
+                  Number(session.min_value) +
+                  1 -
+                  updated.length
+                : session.remaining,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", session.id);
+      } catch (e) {
+        // ignore
+      }
+
+      // adjust current number
+      setCurrentNumber(updated.at(-1)?.generated_number ?? null);
+      setNotice(`Removed ${entry.generated_number} from session.`);
+    } catch (error) {
+      console.error(error);
+      setNotice("Could not delete the number right now.");
+    }
+  }
+
+  async function handleDeleteSession(sessionId) {
+    const confirmed = window.confirm(
+      "Delete this session and all its generated numbers? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    try {
+      try {
+        const { error } = await supabase
+          .from("generator_sessions")
+          .delete()
+          .eq("id", sessionId);
+        if (error) throw error;
+      } catch (syncError) {
+        console.error("Remote session delete failed", syncError);
+      }
+
+      // remove local
+      const remainingLocal = readLocalSessions().filter(
+        (s) => s.id !== sessionId,
+      );
+      writeLocalSessions(remainingLocal);
+
+      // if current session deleted, clear view
+      if (session?.id === sessionId) {
+        setSession(null);
+        setSessionName("My Session");
+        setGeneratedNumbers([]);
+        setRemainingPool([]);
+        setCurrentNumber(null);
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+
+      await loadSavedSessions();
+      setNotice("Session deleted.");
+    } catch (error) {
+      console.error(error);
+      setNotice("Could not delete session right now.");
+    }
   }
 
   function handleExport(type) {
@@ -457,11 +621,19 @@ export default function NumberGenerator({ navigateTo }) {
       generated_at: entry.generated_at,
       is_checked: entry.is_checked,
     }));
-    const exportName = session?.session_name || sessionName || "Number Generator Results";
+    const exportName =
+      session?.session_name || sessionName || "Number Generator Results";
     const exportFileName = sanitizeFileName(exportName);
 
     if (type === "csv") {
-      const csv = ["number,generated_at,is_checked", ...rows.map((row) => `${row.number},${row.generated_at},${row.is_checked ? "true" : "false"}`)].join("\n");
+      // use human-friendly status labels for CSV (colors not supported in CSV)
+      const csv = [
+        "number,generated_at,status",
+        ...rows.map(
+          (row) =>
+            `${row.number},${row.generated_at},${row.is_checked ? "✓ Checked" : "✗ Pending"}`,
+        ),
+      ].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -474,7 +646,9 @@ export default function NumberGenerator({ navigateTo }) {
     }
 
     if (type === "json") {
-      const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(rows, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -494,19 +668,41 @@ export default function NumberGenerator({ navigateTo }) {
       doc.setFontSize(20);
       doc.text(exportName, 14, 20);
       doc.setFontSize(11);
-      doc.text(`Range: ${session?.min_value ?? minValue} to ${session?.max_value ?? maxValue}`, 14, 32);
+      doc.text(
+        `Range: ${session?.min_value ?? minValue} to ${session?.max_value ?? maxValue}`,
+        14,
+        32,
+      );
 
       doc.setTextColor(15, 23, 42);
       doc.setFontSize(13);
       doc.text("Generated Numbers", 14, 54);
       doc.setFont("helvetica", "bold");
       rows.forEach((row, index) => {
-        const y = 68 + index * 10;
+        const y = 68 + index * 12;
         doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
         doc.text(`${index + 1}. ${row.number}`, 14, y);
+
+        // status label: green bold for checked, red bold for unchecked
+        if (row.is_checked) {
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(34, 197, 94); // green
+          doc.text(`✓ Checked`, 40, y);
+        } else {
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(239, 68, 68); // red
+          doc.text(`✗ Pending`, 40, y);
+        }
+
+        // timestamp on the next line in muted color
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(`${row.is_checked ? "✓ Checked" : "○ Pending"} • ${row.generated_at}`, 40, y + 2);
+        doc.setTextColor(112, 122, 138);
+        doc.text(`${row.generated_at}`, 40, y + 6);
       });
       doc.save(`${exportFileName}.pdf`);
       setNotice("PDF exported.");
@@ -516,7 +712,9 @@ export default function NumberGenerator({ navigateTo }) {
     setNotice("Export ready in the dashboard workflow.");
   }
 
-  const lastEntry = generatedNumbers.length ? generatedNumbers[generatedNumbers.length - 1] : null;
+  const lastEntry = generatedNumbers.length
+    ? generatedNumbers[generatedNumbers.length - 1]
+    : null;
 
   return (
     <div className="generator-page">
@@ -525,12 +723,9 @@ export default function NumberGenerator({ navigateTo }) {
           <div className="generator-hero">
             <div>
               <div className="section-tag">UNIQUE RANDOM NUMBER GENERATOR</div>
-              <h2>Generate numbers without repetition in a premium, session-safe flow.</h2>
-              <p>
-                Create a session, generate unique values, and preserve every result in Supabase for a smooth, reusable experience.
-              </p>
+              <h2>Generate numbers</h2>
+              <p>Create a session</p>
             </div>
-            <div className="generator-badge">Fast • Secure • Replayable</div>
           </div>
 
           <div className="generator-nav">
@@ -567,32 +762,54 @@ export default function NumberGenerator({ navigateTo }) {
                 onChange={(event) => setMaxValue(event.target.value)}
               />
             </div>
-            <button className="primary-btn" type="submit" disabled={creatingSession}>
+            <button
+              className="primary-btn"
+              type="submit"
+              disabled={creatingSession}
+            >
               {creatingSession ? "Creating..." : "Create Session"}
             </button>
           </form>
 
           <div className="generator-display-card">
             <div className="generator-display-label">Current Session</div>
-            <div className="generator-session-name">{session?.session_name || sessionName}</div>
-            <div className="generator-display-label">Current Generated Number</div>
-            <div className="generator-display-number">{currentNumber ?? "—"}</div>
+            <div className="generator-session-name">
+              {session?.session_name || sessionName}
+            </div>
+            <div className="generator-display-label">
+              Current Generated Number
+            </div>
+            <div className="generator-display-number">
+              {currentNumber ?? "—"}
+            </div>
             <div className="current-number-check" style={{ marginTop: 10 }}>
               <label className="recent-chip-check">
                 <input
                   type="checkbox"
                   checked={Boolean(lastEntry?.is_checked)}
                   disabled={!lastEntry}
-                  onChange={() => lastEntry && void handleToggleChecked(lastEntry)}
+                  onChange={() =>
+                    lastEntry && void handleToggleChecked(lastEntry)
+                  }
                 />
-                <span style={{ marginLeft: 8 }}>{lastEntry ? "Checked" : ""}</span>
+                <span style={{ marginLeft: 8 }}>
+                  {lastEntry ? "Checked" : ""}
+                </span>
               </label>
             </div>
             <div className="generator-actions">
-              <button className="primary-btn" onClick={handleGenerateNumber} disabled={generating || !session}>
+              <button
+                className="primary-btn"
+                onClick={handleGenerateNumber}
+                disabled={generating || !session}
+              >
                 {generating ? "Generating..." : "Generate Number"}
               </button>
-              <button className="secondary-btn" onClick={handleResetSession} disabled={resetting}>
+              <button
+                className="secondary-btn"
+                onClick={handleResetSession}
+                disabled={resetting}
+              >
                 {resetting ? "Resetting..." : "Reset Session"}
               </button>
             </div>
@@ -600,11 +817,16 @@ export default function NumberGenerator({ navigateTo }) {
 
           <div className="generator-progress-card">
             <div className="progress-meta">
-              <span>Generated {generatedCount} / {totalNumbers || 0}</span>
+              <span>
+                Generated {generatedCount} / {totalNumbers || 0}
+              </span>
               <span>{remainingCount} remaining</span>
             </div>
             <div className="progress-bar">
-              <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }} />
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
             <div className="generator-status">{notice}</div>
           </div>
@@ -616,17 +838,44 @@ export default function NumberGenerator({ navigateTo }) {
             ) : (
               <div className="saved-session-list">
                 {savedSessions.map((item) => (
-                  <button
+                  <div
                     key={item.id}
                     className="saved-session-item"
                     onClick={() => void handleLoadSavedSession(item.id)}
+                    role="button"
+                    tabIndex={0}
                   >
-                    <strong>{item.session_name || "Untitled Session"}</strong>
-                    <span>{item.min_value} → {item.max_value}</span>
-                    <small>
-                      {item.generated_count} generated • {item.status}
-                    </small>
-                  </button>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div>
+                        <strong>
+                          {item.session_name || "Untitled Session"}
+                        </strong>
+                        <div style={{ fontSize: 12, color: "#cbd5e1" }}>
+                          {item.min_value} → {item.max_value}
+                        </div>
+                        <small>
+                          {item.generated_count} generated • {item.status}
+                        </small>
+                      </div>
+                      <button
+                        className="delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleDeleteSession(item.id);
+                        }}
+                        aria-label="Delete session"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -640,7 +889,11 @@ export default function NumberGenerator({ navigateTo }) {
               ) : (
                 <div className="recent-list">
                   {recentNumbers.map((entry) => (
-                    <div key={`${entry.generated_number}-${entry.generated_at}`} className="recent-chip">
+                    <div
+                      key={`${entry.generated_number}-${entry.generated_at}`}
+                      className="recent-chip"
+                      style={{ position: "relative" }}
+                    >
                       <label className="recent-chip-check">
                         <input
                           type="checkbox"
@@ -650,6 +903,13 @@ export default function NumberGenerator({ navigateTo }) {
                         <span>{entry.generated_number}</span>
                       </label>
                       <small>{formatTimestamp(entry.generated_at)}</small>
+                      <button
+                        className="delete-btn"
+                        style={{ position: "absolute", top: 8, right: 8 }}
+                        onClick={() => void handleDeleteNumber(entry)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -666,20 +926,41 @@ export default function NumberGenerator({ navigateTo }) {
               />
               {searchResult ? (
                 searchResult.notFound ? (
-                  <div className="search-state">No result found for {searchResult.value}.</div>
+                  <div className="search-state">
+                    No result found for {searchResult.value}.
+                  </div>
                 ) : (
                   <div className="search-state">
                     <strong>Found {searchResult.generated_number}</strong>
-                    <div>Generated at {formatTimestamp(searchResult.generated_at)}</div>
+                    <div>
+                      Generated at {formatTimestamp(searchResult.generated_at)}
+                    </div>
                   </div>
                 )
               ) : (
-                <div className="search-state">Search for a generated value to see its timestamp.</div>
+                <div className="search-state">
+                  Search for a generated value to see its timestamp.
+                </div>
               )}
               <div className="export-row">
-                <button className="secondary-btn" onClick={() => handleExport("csv")}>Export CSV</button>
-                <button className="secondary-btn" onClick={() => handleExport("json")}>Export JSON</button>
-                <button className="secondary-btn" onClick={() => handleExport("pdf")}>Export PDF</button>
+                <button
+                  className="secondary-btn"
+                  onClick={() => handleExport("csv")}
+                >
+                  Export CSV
+                </button>
+                <button
+                  className="secondary-btn"
+                  onClick={() => handleExport("json")}
+                >
+                  Export JSON
+                </button>
+                <button
+                  className="secondary-btn"
+                  onClick={() => handleExport("pdf")}
+                >
+                  Export PDF
+                </button>
               </div>
             </div>
           </div>
