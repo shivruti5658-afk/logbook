@@ -3,6 +3,7 @@ import { jsPDF } from "jspdf";
 import { supabase } from "./supabaseClient";
 
 const SESSION_STORAGE_KEY = "aerolog-number-generator-session";
+const LOCAL_SESSIONS_STORAGE_KEY = "aerolog-number-generator-local-sessions";
 const RECENT_LIMIT = 20;
 
 function buildFullRange(minValue, maxValue) {
@@ -34,6 +35,20 @@ function sanitizeFileName(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "") || "number-generator";
+}
+
+function readLocalSessions() {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_SESSIONS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+function writeLocalSessions(sessions) {
+  window.localStorage.setItem(LOCAL_SESSIONS_STORAGE_KEY, JSON.stringify(sessions));
 }
 
 export default function NumberGenerator({ navigateTo }) {
@@ -78,9 +93,10 @@ export default function NumberGenerator({ navigateTo }) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setSavedSessions(data || []);
+      setSavedSessions((data || []).length ? data : readLocalSessions());
     } catch (error) {
       console.error(error);
+      setSavedSessions(readLocalSessions());
     }
   };
 
@@ -109,9 +125,12 @@ export default function NumberGenerator({ navigateTo }) {
       minValue: session.min_value,
       maxValue: session.max_value,
       currentNumber,
+      generatedNumbers,
+      remainingPool,
+      totalNumbers,
     };
     window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
-  }, [session, currentNumber]);
+  }, [session, currentNumber, generatedNumbers, remainingPool, sessionName, totalNumbers]);
 
   useEffect(() => {
     if (!searchValue.trim()) {
@@ -142,8 +161,7 @@ export default function NumberGenerator({ navigateTo }) {
 
       if (sessionError) throw sessionError;
       if (!sessionData) {
-        setNotice("The stored session could not be found.");
-        return;
+        throw new Error("Missing remote session");
       }
 
       const { data: generatedData, error: generatedError } = await supabase
@@ -172,6 +190,17 @@ export default function NumberGenerator({ navigateTo }) {
       setCurrentNumber(generatedList.at(-1)?.generated_number ?? null);
       setNotice(`Resumed session with ${generatedList.length} numbers generated.`);
     } catch (error) {
+      const localSessions = readLocalSessions();
+      const localSession = localSessions.find((item) => item.id === sessionId);
+      if (localSession) {
+        setSession(localSession);
+        setSessionName(localSession.session_name || "Untitled Session");
+        setGeneratedNumbers(localSession.generated_numbers || []);
+        setRemainingPool(localSession.remaining_pool || []);
+        setCurrentNumber(localSession.current_number ?? null);
+        setNotice(`Resumed local session with ${localSession.generated_numbers?.length || 0} numbers generated.`);
+        return;
+      }
       console.error(error);
       setNotice("Unable to restore the session right now.");
     }
@@ -197,8 +226,9 @@ export default function NumberGenerator({ navigateTo }) {
       const total = max - min + 1;
       const fullRange = shuffle(buildFullRange(min, max));
       const name = sessionName.trim() || "Untitled Session";
+      const sessionId = crypto.randomUUID();
       const sessionPayload = {
-        id: crypto.randomUUID(),
+        id: sessionId,
         session_name: name,
         min_value: min,
         max_value: max,
@@ -210,24 +240,44 @@ export default function NumberGenerator({ navigateTo }) {
         updated_at: new Date().toISOString(),
       };
 
-      const { data: createdSession, error: sessionError } = await supabase
-        .from("generator_sessions")
-        .insert([sessionPayload])
-        .select()
-        .single();
+      const localSession = {
+        ...sessionPayload,
+        generated_numbers: [],
+        remaining_pool: fullRange,
+        current_number: null,
+      };
+      const localSessions = readLocalSessions();
+      writeLocalSessions([localSession, ...localSessions.filter((item) => item.id !== sessionId)]);
 
-      if (sessionError) throw sessionError;
+      try {
+        const { data: createdSession, error: sessionError } = await supabase
+          .from("generator_sessions")
+          .insert([sessionPayload])
+          .select()
+          .single();
 
-      setSession(createdSession);
+        if (!sessionError && createdSession) {
+          setSession(createdSession);
+        } else {
+          throw sessionError || new Error("Supabase insert failed");
+        }
+      } catch (syncError) {
+        console.error(syncError);
+        setSession(localSession);
+        setNotice(`Session "${name}" created locally. ${total} numbers available.`);
+      }
+
       setSessionName(name);
       setGeneratedNumbers([]);
       setRemainingPool(fullRange);
       setCurrentNumber(null);
       await loadSavedSessions();
-      setNotice(`Session "${name}" ready. ${total} numbers available.`);
+      if (!notice.includes("created locally")) {
+        setNotice(`Session "${name}" ready. ${total} numbers available.`);
+      }
     } catch (error) {
       console.error(error);
-      setNotice("The session could not be created. Please check Supabase.");
+      setNotice("The session could not be created. Please try again.");
     } finally {
       setCreatingSession(false);
     }
@@ -258,30 +308,52 @@ export default function NumberGenerator({ navigateTo }) {
       const nextGeneratedCount = nextGeneratedNumbers.length;
       const nextRemaining = updatedPool.length;
 
-      const { error: insertError } = await supabase
-        .from("generated_numbers")
-        .insert([
-          {
-            session_id: session.id,
-            generated_number: nextNumber,
-            generated_at: newEntry.generated_at,
-            is_checked: false,
-          },
-        ]);
+      const localSessions = readLocalSessions();
+      const nextLocalSessions = localSessions.map((item) =>
+        item.id === session.id
+          ? {
+              ...item,
+              generated_numbers: nextGeneratedNumbers,
+              remaining_pool: updatedPool,
+              current_number: nextNumber,
+              generated_count: nextGeneratedCount,
+              remaining: nextRemaining,
+              status: nextRemaining === 0 ? "completed" : "active",
+              updated_at: new Date().toISOString(),
+            }
+          : item,
+      );
+      writeLocalSessions(nextLocalSessions);
 
-      if (insertError) throw insertError;
+      try {
+        const { error: insertError } = await supabase
+          .from("generated_numbers")
+          .insert([
+            {
+              session_id: session.id,
+              generated_number: nextNumber,
+              generated_at: newEntry.generated_at,
+              is_checked: false,
+            },
+          ]);
 
-      const { error: updateError } = await supabase
-        .from("generator_sessions")
-        .update({
-          generated_count: nextGeneratedCount,
-          remaining: nextRemaining,
-          status: nextRemaining === 0 ? "completed" : "active",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", session.id);
+        if (insertError) throw insertError;
 
-      if (updateError) throw updateError;
+        const { error: updateError } = await supabase
+          .from("generator_sessions")
+          .update({
+            generated_count: nextGeneratedCount,
+            remaining: nextRemaining,
+            status: nextRemaining === 0 ? "completed" : "active",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", session.id);
+
+        if (updateError) throw updateError;
+      } catch (syncError) {
+        console.error(syncError);
+        setNotice(`Generated ${nextNumber}. Saved locally for now.`);
+      }
 
       setGeneratedNumbers(nextGeneratedNumbers);
       setRemainingPool(updatedPool);
@@ -306,13 +378,24 @@ export default function NumberGenerator({ navigateTo }) {
 
     setResetting(true);
     try {
-      await supabase
-        .from("generator_sessions")
-        .update({
-          status: "completed",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", session.id);
+      try {
+        await supabase
+          .from("generator_sessions")
+          .update({
+            status: "completed",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", session.id);
+      } catch (syncError) {
+        console.error(syncError);
+      }
+
+      const localSessions = readLocalSessions();
+      writeLocalSessions(
+        localSessions.map((item) =>
+          item.id === session.id ? { ...item, status: "completed", updated_at: new Date().toISOString() } : item,
+        ),
+      );
 
       setSession(null);
       setSessionName("My Session");
@@ -345,18 +428,23 @@ export default function NumberGenerator({ navigateTo }) {
         .eq("generated_number", entry.generated_number);
 
       if (error) throw error;
-
-      setGeneratedNumbers((current) =>
-        current.map((item) =>
-          item.generated_number === entry.generated_number && item.generated_at === entry.generated_at
-            ? { ...item, is_checked: nextValue }
-            : item,
-        ),
-      );
     } catch (error) {
       console.error(error);
-      setNotice("Unable to update the checkbox status.");
     }
+
+    const updatedGeneratedNumbers = generatedNumbers.map((item) =>
+      item.generated_number === entry.generated_number && item.generated_at === entry.generated_at
+        ? { ...item, is_checked: nextValue }
+        : item,
+    );
+    setGeneratedNumbers(updatedGeneratedNumbers);
+
+    const localSessions = readLocalSessions();
+    writeLocalSessions(
+      localSessions.map((item) =>
+        item.id === session.id ? { ...item, generated_numbers: updatedGeneratedNumbers } : item,
+      ),
+    );
   }
 
   function handleExport(type) {

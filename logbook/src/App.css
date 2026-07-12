@@ -34,6 +34,7 @@ body,
 .aerolog-root {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   font-family:
     Inter,
     system-ui,
@@ -227,6 +228,10 @@ body,
 }
 
 @media (max-width: 768px) {
+  body,
+  .aerolog-root {
+    overflow-x: hidden;
+  }
   .premium-header-top {
     flex-direction: column;
     gap: 16px;
@@ -262,11 +267,11 @@ body,
   }
 
   .generator-page {
-    padding: 14px;
+    padding: 10px;
   }
 
   .generator-card {
-    padding: 18px;
+    padding: 14px;
   }
 
   .generator-hero,
@@ -277,6 +282,10 @@ body,
   .detail-grid {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .generator-controls {
+    gap: 12px;
   }
 
   .generator-hero {
@@ -293,7 +302,7 @@ body,
   }
 
   .generator-display-number {
-    font-size: clamp(2.4rem, 14vw, 3.6rem);
+    font-size: clamp(2.2rem, 14vw, 3.4rem);
   }
 
   .generator-actions,
@@ -311,6 +320,7 @@ body,
   .theme-btn {
     width: 100%;
     justify-content: center;
+    padding: 13px 16px;
   }
 
   .section-header,
@@ -445,7 +455,7 @@ body,
 .generator-controls {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   align-items: end;
   margin-bottom: 24px;
 }
@@ -481,10 +491,11 @@ body,
 }
 
 .generator-display-number {
-  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-size: clamp(2.4rem, 10vw, 6.5rem);
   font-weight: 800;
   line-height: 1;
   color: #ffffff;
+  word-break: break-word;
 }
 
 .generator-actions,
