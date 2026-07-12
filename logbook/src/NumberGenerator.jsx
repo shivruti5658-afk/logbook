@@ -732,13 +732,17 @@ export default function NumberGenerator({ navigateTo }) {
 
         const romanIndex = toRoman(index + 1);
         doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
+        doc.setFont("helvetica");
         doc.setTextColor(15, 23, 42);
         doc.text(`${romanIndex}. ${row.number}`, 14, y);
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(row.is_checked ? 34 : 239, row.is_checked ? 197 : 68, row.is_checked ? 94 : 68);
+        doc.setTextColor(
+          row.is_checked ? 34 : 239,
+          row.is_checked ? 197 : 68,
+          row.is_checked ? 94 : 68,
+        );
         doc.text(row.is_checked ? "✓ Checked" : "✗ Pending", 100, y);
 
         doc.setFontSize(8);
