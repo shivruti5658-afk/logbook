@@ -430,6 +430,31 @@ body,
   margin: 6px 0 12px;
 }
 
+/* Make hero heading and subtitle occupy full width and clamp to 2 lines */
+.generator-hero > div {
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+.generator-hero h2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.generator-hero p {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
 .generator-hero p {
   color: var(--muted);
   max-width: 760px;
@@ -487,7 +512,7 @@ body,
 .generator-session-name {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .generator-display-number {
@@ -601,9 +626,13 @@ body,
 }
 
 .recent-chip-check input {
-  width: 16px;
-  height: 16px;
-  accent-color: #22c55e;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--success);
+  -webkit-appearance: auto;
+  appearance: auto;
+  background: transparent;
+  border-radius: 4px;
 }
 
 .recent-chip span {
@@ -1030,6 +1059,64 @@ body,
   }
 }
 
+/* Light-theme generator adjustments */
+.theme-light .generator-page {
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+}
+
+.theme-light .generator-card {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(2, 6, 23, 0.06);
+  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+}
+
+.theme-light .generator-display-card,
+.theme-light .generator-progress-card,
+.theme-light .generator-panel {
+  background: #ffffff;
+  border: 1px solid rgba(2,6,23,0.04);
+}
+
+.theme-light .generator-badge {
+  background: linear-gradient(90deg, rgba(14,165,233,0.12), rgba(2,132,199,0.06));
+  color: #0b4a66;
+  border: 1px solid rgba(2,132,199,0.06);
+}
+
+.theme-light .primary-btn {
+  background: linear-gradient(90deg, #0ea5e9, #0284c7);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(2,132,199,0.12);
+}
+
+.theme-light .secondary-btn {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid rgba(2,6,23,0.04);
+}
+
+.theme-light .input,
+.theme-light .textarea {
+  background: #ffffff;
+  border: 1px solid rgba(2,6,23,0.06);
+  color: #0f172a;
+}
+
+.theme-light .generator-display-number {
+  color: #0f172a;
+}
+
+.theme-light .recent-chip {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(2,6,23,0.04);
+  color: #0f172a;
+}
+
+.theme-light .empty-state {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px dashed rgba(2,6,23,0.04);
+}
+
 /* Additional premium mobile-friendly tweaks for Number Generator */
 .generator-card {
   max-width: 980px;
@@ -1096,6 +1183,11 @@ body,
   .generator-hero h2 {
     font-size: 1.2rem;
     line-height: 1.25;
+  }
+
+  /* On very small screens, clamp to 1 line for compact layout */
+  .generator-hero h2 {
+    -webkit-line-clamp: 1;
   }
 
   .generator-hero p {
