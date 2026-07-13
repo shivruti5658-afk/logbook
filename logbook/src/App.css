@@ -121,7 +121,7 @@ body,
 .brand-logo {
   width: 58px;
   height: 58px;
-  border-radius: 14px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #00c6ff, #0072ff);
   display: flex;
   align-items: center;
@@ -374,6 +374,7 @@ body,
   .brand-logo {
     width: 46px;
     height: 46px;
+    border-radius: 6px;
     font-size: 20px;
   }
 

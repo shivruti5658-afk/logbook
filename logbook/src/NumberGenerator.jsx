@@ -67,6 +67,7 @@ export default function NumberGenerator({ navigateTo }) {
   const [generatedNumbers, setGeneratedNumbers] = useState([]);
   const [remainingPool, setRemainingPool] = useState([]);
   const [currentNumber, setCurrentNumber] = useState(null);
+  const [currentRemark, setCurrentRemark] = useState("");
   const [notice, setNotice] = useState("Create a session to begin.");
   const [searchValue, setSearchValue] = useState("");
   const [searchResult, setSearchResult] = useState(null);
@@ -151,6 +152,7 @@ export default function NumberGenerator({ navigateTo }) {
       minValue: session.min_value,
       maxValue: session.max_value,
       currentNumber,
+      currentRemark,
       generatedNumbers,
       remainingPool,
       totalNumbers,
@@ -159,6 +161,7 @@ export default function NumberGenerator({ navigateTo }) {
   }, [
     session,
     currentNumber,
+    currentRemark,
     generatedNumbers,
     remainingPool,
     sessionName,
@@ -209,6 +212,7 @@ export default function NumberGenerator({ navigateTo }) {
         generated_number: Number(entry.generated_number),
         generated_at: entry.generated_at,
         is_checked: entry.is_checked ?? false,
+        remark: entry.remark ?? "",
       }));
       const usedNumbers = new Set(
         generatedList.map((entry) => entry.generated_number),
@@ -222,7 +226,8 @@ export default function NumberGenerator({ navigateTo }) {
       setSessionName(sessionData.session_name || "Untitled Session");
       setGeneratedNumbers(generatedList);
       setRemainingPool(shuffle(remaining));
-      setCurrentNumber(generatedList.at(-1)?.generated_number ?? null);
+        setCurrentNumber(generatedList.at(-1)?.generated_number ?? null);
+        setCurrentRemark(generatedList.at(-1)?.remark ?? "");
       setNotice(
         `Resumed session with ${generatedList.length} numbers generated.`,
       );
@@ -234,7 +239,10 @@ export default function NumberGenerator({ navigateTo }) {
         setSessionName(localSession.session_name || "Untitled Session");
         setGeneratedNumbers(localSession.generated_numbers || []);
         setRemainingPool(localSession.remaining_pool || []);
-        setCurrentNumber(localSession.current_number ?? null);
+          setCurrentNumber(localSession.current_number ?? null);
+          setCurrentRemark(
+            localSession.current_remark ?? localSession.generated_numbers?.at(-1)?.remark ?? "",
+          );
         setNotice(
           `Resumed local session with ${localSession.generated_numbers?.length || 0} numbers generated.`,
         );
@@ -347,6 +355,7 @@ export default function NumberGenerator({ navigateTo }) {
         generated_number: nextNumber,
         generated_at: new Date().toISOString(),
         is_checked: false,
+        remark: "",
       };
 
       const nextGeneratedNumbers = [...generatedNumbers, newEntry];
@@ -361,6 +370,7 @@ export default function NumberGenerator({ navigateTo }) {
               generated_numbers: nextGeneratedNumbers,
               remaining_pool: updatedPool,
               current_number: nextNumber,
+              current_remark: "",
               generated_count: nextGeneratedCount,
               remaining: nextRemaining,
               status: nextRemaining === 0 ? "completed" : "active",
@@ -378,6 +388,8 @@ export default function NumberGenerator({ navigateTo }) {
               session_id: session.id,
               generated_number: nextNumber,
               generated_at: newEntry.generated_at,
+              // attempt to send remark if backend supports it
+              remark: newEntry.remark,
             },
           ]);
 
@@ -402,6 +414,7 @@ export default function NumberGenerator({ navigateTo }) {
       setGeneratedNumbers(nextGeneratedNumbers);
       setRemainingPool(updatedPool);
       setCurrentNumber(nextNumber);
+      setCurrentRemark("");
       setNotice(`Generated ${nextNumber}.`);
     } catch (error) {
       console.error(error);
@@ -576,6 +589,7 @@ export default function NumberGenerator({ navigateTo }) {
 
       // adjust current number
       setCurrentNumber(updated.at(-1)?.generated_number ?? null);
+      setCurrentRemark(updated.at(-1)?.remark ?? "");
       setNotice(`Removed ${entry.generated_number} from session.`);
     } catch (error) {
       console.error(error);
@@ -624,11 +638,44 @@ export default function NumberGenerator({ navigateTo }) {
     }
   }
 
+  async function handleRemarkChange(value) {
+    if (!session?.id) return;
+    const last = generatedNumbers[generatedNumbers.length - 1];
+    if (!last) return;
+
+    const updated = generatedNumbers.map((item, i) =>
+      i === generatedNumbers.length - 1
+        ? { ...item, remark: value }
+        : item,
+    );
+
+    setGeneratedNumbers(updated);
+    setCurrentRemark(value);
+
+    const local = readLocalSessions().map((s) =>
+      s.id === session.id
+        ? { ...s, generated_numbers: updated, current_remark: value }
+        : s,
+    );
+    writeLocalSessions(local);
+
+    try {
+      await supabase
+        .from("generated_numbers")
+        .update({ remark: value })
+        .eq("session_id", session.id)
+        .eq("generated_number", last.generated_number);
+    } catch (e) {
+      // ignore if backend doesn't support remark column
+    }
+  }
+
   function handleExport(type) {
     const rows = generatedNumbers.map((entry) => ({
       number: entry.generated_number,
       generated_at: entry.generated_at,
       is_checked: entry.is_checked,
+      remark: entry.remark || "",
     }));
     const exportName =
       session?.session_name || sessionName || "Number Generator Results";
@@ -637,11 +684,12 @@ export default function NumberGenerator({ navigateTo }) {
     if (type === "csv") {
       // use human-friendly status labels for CSV (colors not supported in CSV)
       const csv = [
-        "number,generated_at,status",
-        ...rows.map(
-          (row) =>
-            `${row.number},${row.generated_at},${row.is_checked ? "✓ Checked" : "✗ Pending"}`,
-        ),
+        "number,generated_at,status,remark",
+        ...rows.map((row) =>
+          `${row.number},${row.generated_at},${row.is_checked ? "✓ Checked" : "✗ Pending"},"${String(
+            row.remark || "",
+          ).replace(/"/g, '""')}",`,
+        ).map((r) => r.replace(/,$/, "")),
       ].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -722,6 +770,14 @@ export default function NumberGenerator({ navigateTo }) {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(112, 122, 138);
         doc.text(`${row.generated_at}`, 14, y + 6);
+
+        if (row.remark) {
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(80, 80, 80);
+          doc.text(`Remark: ${row.remark}`, 14, y + 11);
+          y += 4;
+        }
 
         y += 10;
       });
@@ -834,6 +890,17 @@ export default function NumberGenerator({ navigateTo }) {
                 </span>
               </label>
             </div>
+            <div className="field-group" style={{ marginTop: 12 }}>
+              <label className="field-label">Remark</label>
+              <textarea
+                className="input"
+                placeholder="Add remark for this number"
+                value={currentRemark}
+                onChange={(e) => handleRemarkChange(e.target.value)}
+                disabled={!lastEntry}
+                style={{ minHeight: 60, resize: "vertical" }}
+              />
+            </div>
             <div className="generator-actions">
               <button
                 className="primary-btn"
@@ -941,6 +1008,11 @@ export default function NumberGenerator({ navigateTo }) {
                         <span>{entry.generated_number}</span>
                       </label>
                       <small>{formatTimestamp(entry.generated_at)}</small>
+                      {entry.remark ? (
+                        <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
+                          {entry.remark}
+                        </div>
+                      ) : null}
                       <button
                         className="delete-btn icon-btn"
                         style={{ position: "absolute", top: 8, right: 8 }}
@@ -975,6 +1047,11 @@ export default function NumberGenerator({ navigateTo }) {
                     <div>
                       Generated at {formatTimestamp(searchResult.generated_at)}
                     </div>
+                    {searchResult.remark ? (
+                      <div style={{ marginTop: 6, color: "#94a3b8" }}>
+                        {searchResult.remark}
+                      </div>
+                    ) : null}
                   </div>
                 )
               ) : (
