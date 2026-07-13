@@ -421,8 +421,6 @@ function writeLocalSessions(sessions) {
               session_id: session.id,
               generated_number: nextNumber,
               generated_at: newEntry.generated_at,
-              // attempt to send remark if backend supports it
-              remark: newEntry.remark,
             },
           ]);
 
