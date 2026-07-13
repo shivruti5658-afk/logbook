@@ -908,7 +908,7 @@ function writeLocalSessions(sessions) {
             </div>
             <div className="generator-display-number" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
               <div style={{ fontSize: 32 }}>{currentNumber ?? "—"}</div>
-              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>
+              <div className="current-elapsed" style={{ marginTop: 6 }}>
                 {currentNumber ? `Elapsed: ${formatElapsed(elapsedSeconds)}` : null}
               </div>
             </div>
