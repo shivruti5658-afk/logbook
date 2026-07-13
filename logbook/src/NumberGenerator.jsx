@@ -448,6 +448,7 @@ function writeLocalSessions(sessions) {
       setRemainingPool(updatedPool);
       setCurrentNumber(nextNumber);
       setCurrentRemark("");
+      setElapsedSeconds(0);
       setNotice(`Generated ${nextNumber}.`);
     } catch (error) {
       console.error(error);
