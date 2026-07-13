@@ -33,6 +33,16 @@ function formatTimestamp(value) {
       });
 }
 
+function formatElapsed(sec) {
+  if (sec == null) return "—";
+  const s = Number(sec) || 0;
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const seconds = s % 60;
+  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 function sanitizeFileName(value) {
   return (
     String(value)
@@ -57,24 +67,47 @@ function writeLocalSessions(sessions) {
     LOCAL_SESSIONS_STORAGE_KEY,
     JSON.stringify(sessions),
   );
-}
 
-export default function NumberGenerator({ navigateTo }) {
-  const [minValue, setMinValue] = useState("1");
-  const [maxValue, setMaxValue] = useState("100");
-  const [session, setSession] = useState(null);
-  const [sessionName, setSessionName] = useState("My Session");
-  const [generatedNumbers, setGeneratedNumbers] = useState([]);
-  const [remainingPool, setRemainingPool] = useState([]);
-  const [currentNumber, setCurrentNumber] = useState(null);
-  const [currentRemark, setCurrentRemark] = useState("");
-  const [notice, setNotice] = useState("Create a session to begin.");
-  const [searchValue, setSearchValue] = useState("");
-  const [searchResult, setSearchResult] = useState(null);
-  const [creatingSession, setCreatingSession] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const [savedSessions, setSavedSessions] = useState([]);
+    useEffect(() => {
+      // update elapsedSeconds every second based on the last generated entry timestamp
+      let timer = null;
+      function update() {
+        if (!generatedNumbers?.length) {
+          setElapsedSeconds(0);
+          return;
+        }
+        const last = generatedNumbers[generatedNumbers.length - 1];
+        if (!last?.generated_at) {
+          setElapsedSeconds(0);
+          return;
+        }
+        const diff = Math.floor((Date.now() - new Date(last.generated_at).getTime()) / 1000);
+        setElapsedSeconds(diff);
+      }
+
+      update();
+      timer = setInterval(update, 1000);
+      return () => clearInterval(timer);
+    }, [generatedNumbers]);
+
+    useEffect(() => {
+      if (!searchValue.trim()) {
+        setSearchResult(null);
+        return;
+      }
+
+      const value = searchValue.trim();
+      const match = generatedNumbers.find(
+        (entry) => String(entry.generated_number) === value,
+      );
+
+      if (match) {
+        setSearchResult(match);
+        return;
+      }
+
+      setSearchResult({ notFound: true, value });
+    }, [searchValue, generatedNumbers]);
   const [theme, setTheme] = useState(() => {
     const saved = window.localStorage.getItem("aerolog-number-generator-theme");
     return saved === "light" || saved === "dark" ? saved : "dark";
@@ -872,8 +905,11 @@ export default function NumberGenerator({ navigateTo }) {
             <div className="generator-display-label">
               Current Generated Number
             </div>
-            <div className="generator-display-number">
-              {currentNumber ?? "—"}
+            <div className="generator-display-number" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+              <div style={{ fontSize: 32 }}>{currentNumber ?? "—"}</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>
+                {currentNumber ? `Elapsed: ${formatElapsed(elapsedSeconds)}` : null}
+              </div>
             </div>
             <div className="current-number-check" style={{ marginTop: 10 }}>
               <label className="recent-chip-check">
