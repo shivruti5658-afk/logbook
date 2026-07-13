@@ -969,7 +969,14 @@ function writeLocalSessions(sessions) {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="generator-status">{notice}</div>
+            <div className="generator-status">
+              {notice}
+              {currentNumber ? (
+                <span style={{ marginLeft: 12, color: "#94a3b8" }}>
+                  • Elapsed: {formatElapsed(elapsedSeconds)}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="generator-panel">
