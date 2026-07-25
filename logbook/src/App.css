@@ -569,9 +569,9 @@ body,
 }
 
 .current-elapsed {
-  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
-  color: #72e80b;
+  color: #e8370b;
 }
 
 .generator-grid {
