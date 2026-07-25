@@ -569,7 +569,7 @@ body,
 }
 
 .current-elapsed {
-  font-size: clamp(2rem, 3vw, 3rem);
+  font-size: clamp(2rem, 2vw, 2rem);
   font-weight: 700;
   color: #e8370b;
 }
