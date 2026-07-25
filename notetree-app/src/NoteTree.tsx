@@ -11,6 +11,7 @@ import { useAppData } from "./hooks/useAppData";
 import { uid } from "./lib/id";
 
 import type { Note } from "./types";
+import "./NoteTree.css";
 
 export default function NoteTree({
   navigateTo,
