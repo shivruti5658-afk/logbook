@@ -1040,7 +1040,7 @@ export default function NumberGenerator({ navigateTo }) {
                 <span
                   style={{ fontSize: 16, marginLeft: 12, color: "#94a3b8" }}
                 >
-                  • Elapsed: {formatElapsed(elapsedSeconds)}
+                  • T + : {formatElapsed(elapsedSeconds)}
                 </span>
               ) : null}
             </div>
