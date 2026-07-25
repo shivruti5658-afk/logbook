@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Logbook from "./Logbook";
 import NumberGenerator from "./NumberGenerator";
 import "./App.css";
 
@@ -12,11 +11,11 @@ function HomePage({ navigateTo }) {
         <p>Choose an app to manage your work, sessions, and future tools.</p>
       </section>
       <section className="app-launcher" aria-label="Applications">
-        <button className="app-launch-card" type="button" onClick={() => navigateTo("/entries")}>
+        {false && <button className="app-launch-card" type="button" onClick={() => navigateTo("/entries")}>
           <span className="app-launch-icon" aria-hidden="true">LB</span>
           <span className="app-launch-content"><strong>Logbook</strong><small>Record and manage aircraft maintenance work.</small></span>
           <span className="app-launch-arrow" aria-hidden="true">→</span>
-        </button>
+        </button>}
         <button className="app-launch-card" type="button" onClick={() => navigateTo("/number-generator")}>
           <span className="app-launch-icon" aria-hidden="true">NG</span>
           <span className="app-launch-content"><strong>Number Generator</strong><small>Create tracked number sessions with timers and remarks.</small></span>
@@ -54,13 +53,7 @@ function App() {
     return <HomePage navigateTo={navigateTo} />;
   }
 
-  return (
-    <Logbook
-      routePath={routePath}
-      setRoutePath={setRoutePath}
-      navigateTo={navigateTo}
-    />
-  );
+  return <HomePage navigateTo={navigateTo} />;
 }
 
 export default App;
