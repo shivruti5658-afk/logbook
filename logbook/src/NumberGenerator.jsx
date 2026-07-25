@@ -80,6 +80,8 @@ export default function NumberGenerator({ navigateTo }) {
   const [currentNumber, setCurrentNumber] = useState(null);
   const [currentRemark, setCurrentRemark] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerStartedAt, setTimerStartedAt] = useState(null);
   const [notice, setNotice] = useState("Create a session to begin.");
   const [searchValue, setSearchValue] = useState("");
   const [searchResult, setSearchResult] = useState(null);
@@ -94,20 +96,32 @@ export default function NumberGenerator({ navigateTo }) {
   });
 
   useEffect(() => {
-    const updateElapsed = () => {
-      const last = generatedNumbers.at(-1);
-      const generatedAt = new Date(last?.generated_at).getTime();
+    if (!timerRunning || !timerStartedAt) return undefined;
+
+    const updateElapsed = () =>
       setElapsedSeconds(
-        Number.isNaN(generatedAt)
-          ? 0
-          : Math.max(0, Math.floor((Date.now() - generatedAt) / 1000)),
+        Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
       );
-    };
 
     updateElapsed();
     const timer = window.setInterval(updateElapsed, 1000);
     return () => window.clearInterval(timer);
-  }, [generatedNumbers]);
+  }, [timerRunning, timerStartedAt]);
+
+  function startTimer(initialElapsedSeconds = elapsedSeconds) {
+    setElapsedSeconds(initialElapsedSeconds);
+    setTimerStartedAt(Date.now() - initialElapsedSeconds * 1000);
+    setTimerRunning(true);
+  }
+
+  function handleStopTimer() {
+    if (!timerRunning || !timerStartedAt) return;
+    setElapsedSeconds(
+      Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
+    );
+    setTimerRunning(false);
+    setTimerStartedAt(null);
+  }
 
   const totalNumbers = useMemo(() => {
     const min = Number(minValue);
@@ -412,15 +426,10 @@ export default function NumberGenerator({ navigateTo }) {
       const nextNumber = remainingPool[remainingPool.length - 1];
       const updatedPool = remainingPool.slice(0, -1);
       const previousEntry = generatedNumbers.at(-1);
-      const previousElapsedSeconds = previousEntry?.generated_at
-        ? Math.max(
-            0,
-            Math.floor(
-              (new Date(generatedAt).getTime() -
-                new Date(previousEntry.generated_at).getTime()) /
-                1000,
-            ),
-          )
+      const previousElapsedSeconds = previousEntry
+        ? timerRunning && timerStartedAt
+          ? Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000))
+          : elapsedSeconds
         : null;
       const newEntry = {
         generated_number: nextNumber,
@@ -505,7 +514,7 @@ export default function NumberGenerator({ navigateTo }) {
       setRemainingPool(updatedPool);
       setCurrentNumber(nextNumber);
       setCurrentRemark("");
-      setElapsedSeconds(0);
+      startTimer(0);
       setNotice(
         `Generated ${nextNumber}.${databaseSyncFailed ? " Saved locally; database sync failed." : ""}`,
       );
@@ -560,6 +569,9 @@ export default function NumberGenerator({ navigateTo }) {
       setGeneratedNumbers([]);
       setRemainingPool([]);
       setCurrentNumber(null);
+      setElapsedSeconds(0);
+      setTimerRunning(false);
+      setTimerStartedAt(null);
       setSearchValue("");
       window.localStorage.removeItem(SESSION_STORAGE_KEY);
       await loadSavedSessions();
@@ -1005,6 +1017,22 @@ export default function NumberGenerator({ navigateTo }) {
             </div>
             <div className="generator-actions">
               <button
+                className="secondary-btn"
+                type="button"
+                onClick={() => startTimer()}
+                disabled={!currentNumber || timerRunning}
+              >
+                Start Timer
+              </button>
+              <button
+                className="secondary-btn"
+                type="button"
+                onClick={handleStopTimer}
+                disabled={!currentNumber || !timerRunning}
+              >
+                Stop Timer
+              </button>
+              <button
                 className="primary-btn"
                 onClick={handleGenerateNumber}
                 disabled={generating || !session}
@@ -1016,7 +1044,7 @@ export default function NumberGenerator({ navigateTo }) {
                 onClick={handleResetSession}
                 disabled={resetting}
               >
-                {resetting ? "Resetting..." : "Reset Session"}
+                {resetting ? "Ending..." : "End Session"}
               </button>
             </div>
           </div>
