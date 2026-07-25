@@ -67,51 +67,46 @@ function writeLocalSessions(sessions) {
     LOCAL_SESSIONS_STORAGE_KEY,
     JSON.stringify(sessions),
   );
+}
 
-    useEffect(() => {
-      // update elapsedSeconds every second based on the last generated entry timestamp
-      let timer = null;
-      function update() {
-        if (!generatedNumbers?.length) {
-          setElapsedSeconds(0);
-          return;
-        }
-        const last = generatedNumbers[generatedNumbers.length - 1];
-        if (!last?.generated_at) {
-          setElapsedSeconds(0);
-          return;
-        }
-        const diff = Math.floor((Date.now() - new Date(last.generated_at).getTime()) / 1000);
-        setElapsedSeconds(diff);
-      }
+export default function NumberGenerator({ navigateTo }) {
+  const [minValue, setMinValue] = useState("1");
+  const [maxValue, setMaxValue] = useState("100");
+  const [session, setSession] = useState(null);
+  const [sessionName, setSessionName] = useState("My Session");
+  const [generatedNumbers, setGeneratedNumbers] = useState([]);
+  const [remainingPool, setRemainingPool] = useState([]);
+  const [currentNumber, setCurrentNumber] = useState(null);
+  const [currentRemark, setCurrentRemark] = useState("");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [notice, setNotice] = useState("Create a session to begin.");
+  const [searchValue, setSearchValue] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
+  const [creatingSession, setCreatingSession] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [savedSessions, setSavedSessions] = useState([]);
 
-      update();
-      timer = setInterval(update, 1000);
-      return () => clearInterval(timer);
-    }, [generatedNumbers]);
-
-    useEffect(() => {
-      if (!searchValue.trim()) {
-        setSearchResult(null);
-        return;
-      }
-
-      const value = searchValue.trim();
-      const match = generatedNumbers.find(
-        (entry) => String(entry.generated_number) === value,
-      );
-
-      if (match) {
-        setSearchResult(match);
-        return;
-      }
-
-      setSearchResult({ notFound: true, value });
-    }, [searchValue, generatedNumbers]);
   const [theme, setTheme] = useState(() => {
     const saved = window.localStorage.getItem("aerolog-number-generator-theme");
     return saved === "light" || saved === "dark" ? saved : "dark";
   });
+
+  useEffect(() => {
+    const updateElapsed = () => {
+      const last = generatedNumbers.at(-1);
+      const generatedAt = new Date(last?.generated_at).getTime();
+      setElapsedSeconds(
+        Number.isNaN(generatedAt)
+          ? 0
+          : Math.max(0, Math.floor((Date.now() - generatedAt) / 1000)),
+      );
+    };
+
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 1000);
+    return () => window.clearInterval(timer);
+  }, [generatedNumbers]);
 
   const totalNumbers = useMemo(() => {
     const min = Number(minValue);
@@ -146,9 +141,16 @@ function writeLocalSessions(sessions) {
         ...item,
         session_name: item.session_name || "Untitled Session",
       }));
-      setSavedSessions(
-        remoteSessions.length ? remoteSessions : readLocalSessions(),
-      );
+      const localSessions = readLocalSessions();
+      const localById = new Map(localSessions.map((item) => [item.id, item]));
+      const mergedSessions = remoteSessions.map((item) => {
+        const localSession = localById.get(item.id);
+        localById.delete(item.id);
+        return localSession && (localSession.generated_count || 0) > (item.generated_count || 0)
+          ? { ...item, ...localSession }
+          : item;
+      });
+      setSavedSessions([...mergedSessions, ...localById.values()]);
     } catch (error) {
       console.error(error);
       setSavedSessions(readLocalSessions());
@@ -235,18 +237,28 @@ function writeLocalSessions(sessions) {
 
       const { data: generatedData, error: generatedError } = await supabase
         .from("generated_numbers")
-        .select("generated_number, generated_at, is_checked")
+        .select("generated_number, generated_at, is_checked, remark")
         .eq("session_id", sessionId)
         .order("generated_at", { ascending: true });
 
       if (generatedError) throw generatedError;
 
-      const generatedList = (generatedData || []).map((entry) => ({
+      const localSession = readLocalSessions().find((item) => item.id === sessionId);
+      const remoteEntries = (generatedData || []).map((entry) => ({
         generated_number: Number(entry.generated_number),
         generated_at: entry.generated_at,
         is_checked: entry.is_checked ?? false,
         remark: entry.remark ?? "",
       }));
+      const remoteEntryKeys = new Set(
+        remoteEntries.map((entry) => `${entry.generated_number}-${entry.generated_at}`),
+      );
+      const generatedList = [
+        ...remoteEntries,
+        ...((localSession?.generated_numbers || []).filter(
+          (entry) => !remoteEntryKeys.has(`${entry.generated_number}-${entry.generated_at}`),
+        )),
+      ].sort((a, b) => new Date(a.generated_at) - new Date(b.generated_at));
       const usedNumbers = new Set(
         generatedList.map((entry) => entry.generated_number),
       );
@@ -413,6 +425,7 @@ function writeLocalSessions(sessions) {
       );
       writeLocalSessions(nextLocalSessions);
 
+      let databaseSyncFailed = false;
       try {
         const { error: insertError } = await supabase
           .from("generated_numbers")
@@ -421,6 +434,7 @@ function writeLocalSessions(sessions) {
               session_id: session.id,
               generated_number: nextNumber,
               generated_at: newEntry.generated_at,
+              remark: newEntry.remark,
             },
           ]);
 
@@ -439,7 +453,7 @@ function writeLocalSessions(sessions) {
         if (updateError) throw updateError;
       } catch (syncError) {
         console.error(syncError);
-        setNotice(`Generated ${nextNumber}. Saved locally for now.`);
+        databaseSyncFailed = true;
       }
 
       setGeneratedNumbers(nextGeneratedNumbers);
@@ -447,7 +461,9 @@ function writeLocalSessions(sessions) {
       setCurrentNumber(nextNumber);
       setCurrentRemark("");
       setElapsedSeconds(0);
-      setNotice(`Generated ${nextNumber}.`);
+      setNotice(
+        `Generated ${nextNumber}.${databaseSyncFailed ? " Saved locally; database sync failed." : ""}`,
+      );
     } catch (error) {
       console.error(error);
       setNotice("Unable to save the generated number. Please try again.");
@@ -904,9 +920,9 @@ function writeLocalSessions(sessions) {
             <div className="generator-display-label">
               Current Generated Number
             </div>
-            <div className="generator-display-number" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <div className="generator-display-number" style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ fontSize: 32 }}>{currentNumber ?? "—"}</div>
-              <div className="current-elapsed" style={{ marginTop: 6 }}>
+              <div className="current-elapsed">
                 {currentNumber ? `Elapsed: ${formatElapsed(elapsedSeconds)}` : null}
               </div>
             </div>
