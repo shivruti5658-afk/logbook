@@ -1,8 +1,25 @@
 import { useMemo, useRef } from "react";
-import { Archive, List, ListChecks, Pin, Quote, Trash2, Type, Code2 } from "lucide-react";
+
+import type { KeyboardEvent } from "react";
+
+import {
+  Archive,
+  CheckSquare,
+  Code2,
+  List,
+  ListOrdered,
+  Pin,
+  Quote,
+  Trash2,
+  Type,
+} from "lucide-react";
+
 import type { BlockType, Note, NodeItem } from "../types";
+
 import { childrenOf, descendants, normalise, visibleNodes } from "../lib/tree";
+
 import { uid } from "../lib/id";
+
 import { NodeRow } from "./NodeRow";
 
 type Props = {
@@ -12,123 +29,528 @@ type Props = {
   onDelete: () => void;
 };
 
-export function Editor({note, saveState, onUpdate, onDelete}: Props) {
+export function Editor({ note, saveState, onUpdate, onDelete }: Props) {
   const refs = useRef<Record<string, HTMLInputElement | null>>({});
+
   const visible = useMemo(() => visibleNodes(note.nodes), [note.nodes]);
 
-  const updateNodes = (nodes: NodeItem[]) => onUpdate({...note, nodes: normalise(nodes), updatedAt: new Date().toISOString()});
-  const focus = (id: string) => requestAnimationFrame(() => refs.current[id]?.focus());
+  function updateNodes(nodes: NodeItem[]) {
+    onUpdate({
+      ...note,
+
+      nodes: normalise(nodes),
+
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  function focus(id: string) {
+    requestAnimationFrame(() => {
+      refs.current[id]?.focus();
+    });
+  }
 
   function patch(id: string, changes: Partial<NodeItem>) {
-    updateNodes(note.nodes.map(n => n.id===id ? {...n, ...changes} : n));
+    updateNodes(
+      note.nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              ...changes,
+            }
+          : node,
+      ),
+    );
   }
 
   function addAfter(node: NodeItem) {
     const siblings = childrenOf(note.nodes, node.parentId);
-    const idx = siblings.findIndex(n=>n.id===node.id);
+
+    const index = siblings.findIndex((item) => item.id === node.id);
+
     const id = uid();
-    const created: NodeItem = {id, parentId: node.parentId, content:"", type:"bullet", position:idx+1, collapsed:false};
-    const shifted = note.nodes.map(n => n.parentId===node.parentId && n.position>node.position ? {...n, position:n.position+1} : n);
+
+    const created: NodeItem = {
+      id,
+
+      parentId: node.parentId,
+
+      content: "",
+
+      type: "bullet",
+
+      position: index + 1,
+
+      collapsed: false,
+    };
+
+    const shifted = note.nodes.map((item) =>
+      item.parentId === node.parentId && item.position > node.position
+        ? {
+            ...item,
+
+            position: item.position + 1,
+          }
+        : item,
+    );
+
     updateNodes([...shifted, created]);
+
+    focus(id);
+  }
+
+  function addChild(node: NodeItem) {
+    const id = uid();
+
+    const children = childrenOf(note.nodes, node.id);
+
+    const created: NodeItem = {
+      id,
+
+      parentId: node.id,
+
+      content: "",
+
+      type: "bullet",
+
+      position: children.length,
+
+      collapsed: false,
+    };
+
+    const updated = note.nodes.map((item) =>
+      item.id === node.id
+        ? {
+            ...item,
+            collapsed: false,
+          }
+        : item,
+    );
+
+    updateNodes([...updated, created]);
+
     focus(id);
   }
 
   function indent(node: NodeItem) {
     const siblings = childrenOf(note.nodes, node.parentId);
-    const idx = siblings.findIndex(n=>n.id===node.id);
-    if (idx<=0) return;
-    const parent = siblings[idx-1];
-    patch(node.id, {parentId:parent.id, position:childrenOf(note.nodes,parent.id).length});
+
+    const index = siblings.findIndex((item) => item.id === node.id);
+
+    if (index <= 0) {
+      return;
+    }
+
+    const newParent = siblings[index - 1];
+
+    const children = childrenOf(note.nodes, newParent.id);
+
+    const updated = note.nodes.map((item) => {
+      if (item.id === newParent.id) {
+        return {
+          ...item,
+          collapsed: false,
+        };
+      }
+
+      if (item.id === node.id) {
+        return {
+          ...item,
+
+          parentId: newParent.id,
+
+          position: children.length,
+        };
+      }
+
+      return item;
+    });
+
+    updateNodes(updated);
+
     focus(node.id);
   }
 
   function outdent(node: NodeItem) {
-    if (!node.parentId) return;
-    const parent = note.nodes.find(n=>n.id===node.parentId);
-    if (!parent) return;
-    const newPos = parent.position + 1;
-    const shifted = note.nodes.map(n => n.parentId===parent.parentId && n.position>=newPos ? {...n, position:n.position+1} : n);
-    updateNodes(shifted.map(n => n.id===node.id ? {...n,parentId:parent.parentId,position:newPos} : n));
+    if (!node.parentId) {
+      return;
+    }
+
+    const parent = note.nodes.find((item) => item.id === node.parentId);
+
+    if (!parent) {
+      return;
+    }
+
+    const newPosition = parent.position + 1;
+
+    const shifted = note.nodes.map((item) => {
+      if (item.parentId === parent.parentId && item.position >= newPosition) {
+        return {
+          ...item,
+
+          position: item.position + 1,
+        };
+      }
+
+      return item;
+    });
+
+    const updated = shifted.map((item) =>
+      item.id === node.id
+        ? {
+            ...item,
+
+            parentId: parent.parentId,
+
+            position: newPosition,
+          }
+        : item,
+    );
+
+    updateNodes(updated);
+
     focus(node.id);
   }
 
   function move(node: NodeItem, delta: number) {
-    const siblings = childrenOf(note.nodes,node.parentId);
-    const i = siblings.findIndex(n=>n.id===node.id);
-    const j = i+delta;
-    if (j<0 || j>=siblings.length) return;
-    const other = siblings[j];
-    updateNodes(note.nodes.map(n =>
-      n.id===node.id ? {...n,position:other.position} :
-      n.id===other.id ? {...n,position:node.position} : n
-    ));
+    const siblings = childrenOf(note.nodes, node.parentId);
+
+    const currentIndex = siblings.findIndex((item) => item.id === node.id);
+
+    const targetIndex = currentIndex + delta;
+
+    if (targetIndex < 0 || targetIndex >= siblings.length) {
+      return;
+    }
+
+    const other = siblings[targetIndex];
+
+    updateNodes(
+      note.nodes.map((item) => {
+        if (item.id === node.id) {
+          return {
+            ...item,
+
+            position: other.position,
+          };
+        }
+
+        if (item.id === other.id) {
+          return {
+            ...item,
+
+            position: node.position,
+          };
+        }
+
+        return item;
+      }),
+    );
+
     focus(node.id);
   }
 
   function remove(node: NodeItem) {
-    const ids = new Set([node.id,...descendants(note.nodes,node.id)]);
-    const next = visible.findIndex(x=>x.node.id===node.id);
-    const target = visible[next-1]?.node.id || visible[next+1]?.node.id;
-    updateNodes(note.nodes.filter(n=>!ids.has(n.id)));
-    if(target) focus(target);
+    const ids = new Set([node.id, ...descendants(note.nodes, node.id)]);
+
+    const index = visible.findIndex((item) => item.node.id === node.id);
+
+    const target = visible[index - 1]?.node.id ?? visible[index + 1]?.node.id;
+
+    updateNodes(note.nodes.filter((item) => !ids.has(item.id)));
+
+    if (target) {
+      focus(target);
+    }
   }
 
   function setType(node: NodeItem, type: BlockType) {
-    patch(node.id,{type});
+    patch(node.id, { type });
+
     focus(node.id);
   }
 
-  function onKey(node: NodeItem, e: React.KeyboardEvent<HTMLInputElement>) {
-    if(e.key==="Enter") { e.preventDefault(); addAfter(node); return; }
-    if(e.key==="Tab") { e.preventDefault(); e.shiftKey ? outdent(node) : indent(node); return; }
-    if(e.altKey && e.key==="ArrowUp") { e.preventDefault(); move(node,-1); return; }
-    if(e.altKey && e.key==="ArrowDown") { e.preventDefault(); move(node,1); return; }
-    if(e.altKey && e.key==="ArrowRight") { e.preventDefault(); indent(node); return; }
-    if(e.altKey && e.key==="ArrowLeft") { e.preventDefault(); outdent(node); return; }
-    if(e.key==="ArrowUp") {
-      const i=visible.findIndex(x=>x.node.id===node.id); const id=visible[i-1]?.node.id;
-      if(id){e.preventDefault();focus(id)}
+  function onKey(node: NodeItem, event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+
+      addChild(node);
+
+      return;
     }
-    if(e.key==="ArrowDown") {
-      const i=visible.findIndex(x=>x.node.id===node.id); const id=visible[i+1]?.node.id;
-      if(id){e.preventDefault();focus(id)}
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      addAfter(node);
+
+      return;
     }
-    if(e.key==="Backspace" && !node.content) { e.preventDefault(); remove(node); }
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+
+      if (event.shiftKey) {
+        outdent(node);
+      } else {
+        indent(node);
+      }
+
+      return;
+    }
+
+    if (event.altKey && event.key === "ArrowUp") {
+      event.preventDefault();
+
+      move(node, -1);
+
+      return;
+    }
+
+    if (event.altKey && event.key === "ArrowDown") {
+      event.preventDefault();
+
+      move(node, 1);
+
+      return;
+    }
+
+    if (event.altKey && event.key === "ArrowRight") {
+      event.preventDefault();
+
+      indent(node);
+
+      return;
+    }
+
+    if (event.altKey && event.key === "ArrowLeft") {
+      event.preventDefault();
+
+      outdent(node);
+
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      const index = visible.findIndex((item) => item.node.id === node.id);
+
+      const id = visible[index - 1]?.node.id;
+
+      if (id) {
+        event.preventDefault();
+
+        focus(id);
+      }
+    }
+
+    if (event.key === "ArrowDown") {
+      const index = visible.findIndex((item) => item.node.id === node.id);
+
+      const id = visible[index + 1]?.node.id;
+
+      if (id) {
+        event.preventDefault();
+
+        focus(id);
+      }
+    }
+
+    if (event.key === "Backspace" && !node.content) {
+      event.preventDefault();
+
+      remove(node);
+    }
   }
 
-  const active = document.activeElement instanceof HTMLInputElement
-    ? note.nodes.find(n=>refs.current[n.id]===document.activeElement)
-    : undefined;
+  const active =
+    document.activeElement instanceof HTMLInputElement
+      ? note.nodes.find(
+          (node) => refs.current[node.id] === document.activeElement,
+        )
+      : undefined;
 
-  return <main className="editor">
-    <div className="editorTop">
-      <span className="saveState">{saveState}</span>
-      <div className="actions">
-        <button className="iconBtn" title="Pin" onClick={()=>onUpdate({...note,pinned:!note.pinned})}><Pin size={17}/></button>
-        <button className="iconBtn" title="Archive" onClick={()=>onUpdate({...note,archived:true})}><Archive size={17}/></button>
-        <button className="iconBtn danger" title="Delete" onClick={onDelete}><Trash2 size={17}/></button>
-      </div>
-    </div>
-    <input className="titleInput" value={note.title} onChange={e=>onUpdate({...note,title:e.target.value,updatedAt:new Date().toISOString()})} placeholder="Untitled"/>
-    <div className="formatBar">
-      <button onMouseDown={e=>e.preventDefault()} onClick={()=>active&&setType(active,"bullet")}><List size={15}/> Bullet</button>
-      <button onMouseDown={e=>e.preventDefault()} onClick={()=>active&&setType(active,"number")}>1. Number</button>
-      <button onMouseDown={e=>e.preventDefault()} onClick={()=>active&&setType(active,"task")}><ListChecks size={15}/> Task</button>
-      <button onMouseDown={e=>e.preventDefault()} onClick={()=>active&&setType(active,"heading")}><Type size={15}/> Heading</button>
-      <button onMouseDown={e=>e.preventDefault()} onClick={()=>active&&setType(active,"quote")}><Quote size={15}/> Quote</button>
-      <button onMouseDown={e=>e.preventDefault()} onClick={()=>active&&setType(active,"code")}><Code2 size={15}/> Code</button>
-    </div>
-    <div className="nodes">
-      {visible.map(({node,depth},index) => <NodeRow
-        key={node.id} node={node} depth={depth} index={index}
-        hasChildren={childrenOf(note.nodes,node.id).length>0}
-        inputRef={el=>{refs.current[node.id]=el}}
-        onChange={content=>patch(node.id,{content})}
-        onKeyDown={e=>onKey(node,e)}
-        onToggle={()=>patch(node.id,{collapsed:!node.collapsed})}
-        onCheck={()=>patch(node.id,{checked:!node.checked})}
-      />)}
-    </div>
-    <div className="shortcutHelp">Enter sibling · Tab child · Shift+Tab outdent · ↑/↓ navigate · Alt+↑/↓ reorder · Backspace empty node</div>
-  </main>
+  return (
+    <main className="editor">
+      <header className="editorHeader">
+        <div className="saveArea">
+          <span className={`saveDot ${saveState === "Saved" ? "saved" : ""}`} />
+
+          <span>{saveState}</span>
+        </div>
+
+        <div className="editorActions">
+          <button
+            type="button"
+            className={`iconButton ${note.pinned ? "activeButton" : ""}`}
+            title="Pin note"
+            onClick={() =>
+              onUpdate({
+                ...note,
+                pinned: !note.pinned,
+              })
+            }
+          >
+            <Pin size={18} />
+          </button>
+
+          <button
+            type="button"
+            className="iconButton"
+            title="Archive note"
+            onClick={() =>
+              onUpdate({
+                ...note,
+                archived: true,
+              })
+            }
+          >
+            <Archive size={18} />
+          </button>
+
+          <button
+            type="button"
+            className="iconButton dangerButton"
+            title="Delete note"
+            onClick={onDelete}
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      </header>
+
+      <article className="document">
+        <input
+          className="titleInput"
+          value={note.title}
+          onChange={(event) =>
+            onUpdate({
+              ...note,
+
+              title: event.target.value,
+
+              updatedAt: new Date().toISOString(),
+            })
+          }
+          placeholder="Untitled"
+        />
+
+        <div className="formatBar">
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => active && setType(active, "bullet")}
+          >
+            <List size={16} />
+            <span>Bullet</span>
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => active && setType(active, "number")}
+          >
+            <ListOrdered size={16} />
+            <span>Number</span>
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => active && setType(active, "task")}
+          >
+            <CheckSquare size={16} />
+            <span>Task</span>
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => active && setType(active, "heading")}
+          >
+            <Type size={16} />
+            <span>Heading</span>
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => active && setType(active, "quote")}
+          >
+            <Quote size={16} />
+            <span>Quote</span>
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => active && setType(active, "code")}
+          >
+            <Code2 size={16} />
+            <span>Code</span>
+          </button>
+        </div>
+
+        <section className="nodes">
+          {visible.map(({ node, depth }) => (
+            <NodeRow
+              key={node.id}
+              node={node}
+              depth={depth}
+              hasChildren={childrenOf(note.nodes, node.id).length > 0}
+              inputRef={(element) => {
+                refs.current[node.id] = element;
+              }}
+              onChange={(content) =>
+                patch(node.id, {
+                  content,
+                })
+              }
+              onKeyDown={(event) => onKey(node, event)}
+              onToggle={() =>
+                patch(node.id, {
+                  collapsed: !node.collapsed,
+                })
+              }
+              onCheck={() =>
+                patch(node.id, {
+                  checked: !node.checked,
+                })
+              }
+              onIndent={() => indent(node)}
+              onOutdent={() => outdent(node)}
+            />
+          ))}
+        </section>
+
+        <div className="keyboardHelp">
+          <span>
+            <kbd>Enter</kbd>
+            New bullet
+          </span>
+
+          <span>
+            <kbd>Tab</kbd>
+            Sub-bullet
+          </span>
+
+          <span>
+            <kbd>Shift</kbd>+<kbd>Tab</kbd>
+            Move left
+          </span>
+
+          <span>
+            <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
+            Child
+          </span>
+
+          <span>
+            <kbd>Alt</kbd>+<kbd>↑</kbd>
+            <kbd>↓</kbd>
+            Reorder
+          </span>
+        </div>
+      </article>
+    </main>
+  );
 }

@@ -1,4 +1,10 @@
-export type BlockType = "bullet" | "number" | "task" | "heading" | "quote" | "code";
+export type BlockType =
+  | "bullet"
+  | "number"
+  | "task"
+  | "heading"
+  | "quote"
+  | "code";
 
 export interface NodeItem {
   id: string;
