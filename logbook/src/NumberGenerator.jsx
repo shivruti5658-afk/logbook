@@ -1065,9 +1065,7 @@ export default function NumberGenerator({ navigateTo }) {
             <div className="generator-status">
               {notice}
               {currentNumber ? (
-                <span
-                  style={{ fontSize: 16, marginLeft: 12, color: "#94a3b8" }}
-                >
+                <span style={{ marginLeft: 12, color: "#94a3b8" }}>
                   • Time: {formatElapsed(elapsedSeconds)}
                 </span>
               ) : null}
