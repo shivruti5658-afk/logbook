@@ -1,0 +1,28 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+  --bg:#0b0d12; --panel:#11141b; --panel2:#171b24; --text:#eef1f7; --muted:#8d95a5;
+  --border:#252b36; --accent:#7c9cff; --accent2:#5d7df0; --danger:#ff7272;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg:#f7f8fb; --panel:#ffffff; --panel2:#f1f3f7; --text:#171a21; --muted:#687080;
+  --border:#dde1e8; --accent:#4969df; --accent2:#3858ce; --danger:#c43e3e;
+}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text)} button,input{font:inherit}
+button{color:inherit}.appShell{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+.sidebar{background:var(--panel);border-right:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:10px;min-height:100vh}
+.brand{font-size:20px;font-weight:800;letter-spacing:-.5px;padding:4px 6px 10px}.primary{border:0;border-radius:9px;background:var(--accent);color:white;padding:10px 13px;font-weight:700;display:flex;gap:7px;align-items:center;justify-content:center;cursor:pointer}
+.primary:hover{background:var(--accent2)}.search{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--panel2);padding:8px 10px;border-radius:8px}
+.search input{border:0;outline:0;background:transparent;color:var(--text);width:100%}.sectionRow{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-top:8px;padding:0 5px}
+.iconBtn{border:0;background:transparent;padding:6px;border-radius:6px;display:grid;place-items:center;cursor:pointer}.iconBtn:hover{background:var(--panel2)}.danger:hover{color:var(--danger)}
+.noteList,.folderList{display:flex;flex-direction:column;gap:2px}.noteLink,.folder{width:100%;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--muted);padding:8px;border-radius:7px;text-align:left}
+.noteLink{cursor:pointer}.noteLink:hover,.noteLink.active{background:var(--panel2);color:var(--text)}.noteLink span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.folder{font-size:14px}.emptySmall{font-size:13px;color:var(--muted);padding:8px}.sidebarBottom{margin-top:auto}
+.editor{max-width:1000px;width:100%;margin:0 auto;padding:20px 48px 80px}.editorTop{display:flex;justify-content:flex-end;align-items:center;gap:18px}.actions{display:flex;gap:3px}.saveState{font-size:12px;color:var(--muted)}
+.titleInput{display:block;width:100%;font-size:42px;font-weight:800;letter-spacing:-1.5px;border:0;outline:0;background:transparent;color:var(--text);padding:40px 0 22px}
+.formatBar{position:sticky;top:10px;z-index:4;display:flex;gap:5px;flex-wrap:wrap;background:color-mix(in srgb,var(--panel) 90%,transparent);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:18px;width:max-content;max-width:100%}
+.formatBar button{border:0;background:transparent;color:var(--muted);padding:6px 8px;border-radius:6px;display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px}.formatBar button:hover{background:var(--panel2);color:var(--text)}
+.nodes{padding:4px 0}.nodeRow{min-height:38px;display:flex;align-items:center;border-radius:7px}.nodeRow:focus-within{background:var(--panel2)}.drag{opacity:0;color:var(--muted);display:grid;place-items:center;width:20px}.nodeRow:hover .drag{opacity:1}.collapse{border:0;background:transparent;color:var(--muted);padding:0;width:20px;display:grid;place-items:center;cursor:pointer}.spacer{display:block}.bullet{width:22px;text-align:center;color:var(--muted)}.check{margin:0 8px 0 5px}
+.nodeInput{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);padding:8px 6px;font-size:16px}.type-heading .nodeInput{font-size:21px;font-weight:750}.type-quote .nodeInput{font-style:italic;border-left:2px solid var(--border);padding-left:12px}.type-code .nodeInput{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--panel2);border-radius:5px}
+.shortcutHelp{margin-top:30px;border-top:1px solid var(--border);padding-top:16px;color:var(--muted);font-size:12px}.welcome{display:grid;place-items:center;text-align:center;padding:40px}.welcome h1{font-size:42px;margin:0 0 12px}.welcome p{color:var(--muted);margin:0 0 22px}
+@media(max-width:760px){.appShell{grid-template-columns:1fr}.sidebar{min-height:auto;border-right:0;border-bottom:1px solid var(--border)}.folderList{display:none}.editor{padding:18px}.titleInput{font-size:32px;padding-top:25px}.shortcutHelp{display:none}}

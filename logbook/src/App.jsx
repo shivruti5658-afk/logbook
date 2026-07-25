@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import NumberGenerator from "./NumberGenerator";
+import NoteTree from "./NoteTree";
 import "./App.css";
 
 function HomePage({ navigateTo }) {
@@ -19,6 +20,11 @@ function HomePage({ navigateTo }) {
         <button className="app-launch-card" type="button" onClick={() => navigateTo("/number-generator")}>
           <span className="app-launch-icon" aria-hidden="true">NG</span>
           <span className="app-launch-content"><strong>Number Generator</strong><small>Create tracked number sessions with timers and remarks.</small></span>
+          <span className="app-launch-arrow" aria-hidden="true">→</span>
+        </button>
+        <button className="app-launch-card" type="button" onClick={() => navigateTo("/note-tree")}>
+          <span className="app-launch-icon" aria-hidden="true">NT</span>
+          <span className="app-launch-content"><strong>NoteTree</strong><small>Build structured notes with tree-based blocks.</small></span>
           <span className="app-launch-arrow" aria-hidden="true">→</span>
         </button>
         <div className="app-launch-card app-launch-card--future">
@@ -47,6 +53,10 @@ function App() {
 
   if (routePath === "/number-generator") {
     return <NumberGenerator navigateTo={navigateTo} />;
+  }
+
+  if (routePath === "/note-tree") {
+    return <NoteTree navigateTo={navigateTo} />;
   }
 
   if (routePath === "/") {
