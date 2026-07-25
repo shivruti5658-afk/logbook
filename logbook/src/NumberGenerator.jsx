@@ -985,7 +985,7 @@ export default function NumberGenerator({ navigateTo }) {
               <div style={{ fontSize: 32 }}>{currentNumber ?? "—"}</div>
               <div className="current-elapsed">
                 {currentNumber
-                  ? `Elapsed: ${formatElapsed(elapsedSeconds)}`
+                  ? `Time: ${formatElapsed(elapsedSeconds)}`
                   : null}
               </div>
             </div>
