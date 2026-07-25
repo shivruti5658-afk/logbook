@@ -12,7 +12,11 @@ import { uid } from "./lib/id";
 
 import type { Note } from "./types";
 
-export default function App() {
+export default function NoteTree({
+  navigateTo,
+}: {
+  navigateTo: (path: string) => void;
+}) {
   const { data, setData, saveState } = useAppData();
 
   const [selectedId, setSelectedId] = useState<string | null>(

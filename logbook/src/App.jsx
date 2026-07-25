@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import NumberGenerator from "./NumberGenerator";
-import noteTree from "./noteTree";
+import NoteTree from "./NoteTree";
 import "./App.css";
 
 function HomePage({ navigateTo }) {
@@ -98,7 +98,7 @@ function App() {
   }
 
   if (routePath === "/note-tree") {
-    return <noteTree navigateTo={navigateTo} />;
+    return <NoteTree navigateTo={navigateTo} />;
   }
 
   if (routePath === "/") {
