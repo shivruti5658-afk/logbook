@@ -51,6 +51,9 @@ ADD COLUMN IF NOT EXISTS is_checked boolean DEFAULT false;
 ALTER TABLE public.generated_numbers
 ADD COLUMN IF NOT EXISTS remark text NOT NULL DEFAULT '';
 
+ALTER TABLE public.generated_numbers
+ADD COLUMN IF NOT EXISTS elapsed_seconds integer;
+
 -- Trigger to keep updated_at in sync on row updates.
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
