@@ -48,6 +48,24 @@ body,
   color: var(--text);
 }
 
+.app-home { width: min(100% - 40px, 1060px); min-height: 100vh; margin: 0 auto; padding: clamp(56px, 10vh, 120px) 0 48px; }
+.app-home-hero { max-width: 660px; margin-bottom: 38px; }
+.app-home-eyebrow { color: var(--accent); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.16em; }
+.app-home h1 { margin: 12px 0; font-size: clamp(2.25rem, 6vw, 4.5rem); line-height: 1.03; }
+.app-home p { margin: 0; color: var(--muted); font-size: 1.08rem; }
+.app-launcher { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 38px; }
+.app-launch-card { min-height: 210px; padding: 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); color: var(--text); text-align: left; cursor: pointer; transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+.app-launch-card:not(.app-launch-card--future):hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: var(--shadow); }
+.app-launch-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 14px; background: var(--accent); color: #06223a; font-weight: 900; }
+.app-launch-content { display: grid; gap: 7px; }
+.app-launch-content strong { font-size: 1.2rem; }
+.app-launch-content small { color: var(--muted); line-height: 1.45; }
+.app-launch-arrow { margin-top: auto; color: var(--accent); font-size: 1.5rem; }
+.app-launch-card--future { opacity: 0.7; cursor: default; }
+.app-launch-badge { margin-top: auto; color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+
+@media (max-width: 760px) { .app-launcher { grid-template-columns: 1fr; } .app-launch-card { min-height: 165px; } }
+
 .page-content,
 .topbar {
   width: 100%;
