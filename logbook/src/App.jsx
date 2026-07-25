@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import NumberGenerator from "./NumberGenerator";
-import NoteTree from "./NoteTree";
+import noteTree from "./noteTree";
 import "./App.css";
 
 function HomePage({ navigateTo }) {
@@ -12,24 +12,66 @@ function HomePage({ navigateTo }) {
         <p>Choose an app to manage your work, sessions, and future tools.</p>
       </section>
       <section className="app-launcher" aria-label="Applications">
-        {false && <button className="app-launch-card" type="button" onClick={() => navigateTo("/entries")}>
-          <span className="app-launch-icon" aria-hidden="true">LB</span>
-          <span className="app-launch-content"><strong>Logbook</strong><small>Record and manage aircraft maintenance work.</small></span>
-          <span className="app-launch-arrow" aria-hidden="true">→</span>
-        </button>}
-        <button className="app-launch-card" type="button" onClick={() => navigateTo("/number-generator")}>
-          <span className="app-launch-icon" aria-hidden="true">NG</span>
-          <span className="app-launch-content"><strong>Number Generator</strong><small>Create tracked number sessions with timers and remarks.</small></span>
-          <span className="app-launch-arrow" aria-hidden="true">→</span>
+        {false && (
+          <button
+            className="app-launch-card"
+            type="button"
+            onClick={() => navigateTo("/entries")}
+          >
+            <span className="app-launch-icon" aria-hidden="true">
+              LB
+            </span>
+            <span className="app-launch-content">
+              <strong>Logbook</strong>
+              <small>Record and manage aircraft maintenance work.</small>
+            </span>
+            <span className="app-launch-arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+        )}
+        <button
+          className="app-launch-card"
+          type="button"
+          onClick={() => navigateTo("/number-generator")}
+        >
+          <span className="app-launch-icon" aria-hidden="true">
+            NG
+          </span>
+          <span className="app-launch-content">
+            <strong>Number Generator</strong>
+            <small>
+              Create tracked number sessions with timers and remarks.
+            </small>
+          </span>
+          <span className="app-launch-arrow" aria-hidden="true">
+            →
+          </span>
         </button>
-        <button className="app-launch-card" type="button" onClick={() => navigateTo("/note-tree")}>
-          <span className="app-launch-icon" aria-hidden="true">NT</span>
-          <span className="app-launch-content"><strong>NoteTree</strong><small>Build structured notes with tree-based blocks.</small></span>
-          <span className="app-launch-arrow" aria-hidden="true">→</span>
+        <button
+          className="app-launch-card"
+          type="button"
+          onClick={() => navigateTo("/note-tree")}
+        >
+          <span className="app-launch-icon" aria-hidden="true">
+            NT
+          </span>
+          <span className="app-launch-content">
+            <strong>NoteTree</strong>
+            <small>Build structured notes with tree-based blocks.</small>
+          </span>
+          <span className="app-launch-arrow" aria-hidden="true">
+            →
+          </span>
         </button>
         <div className="app-launch-card app-launch-card--future">
-          <span className="app-launch-icon" aria-hidden="true">+</span>
-          <span className="app-launch-content"><strong>Future Apps</strong><small>New aerospace tools will appear here.</small></span>
+          <span className="app-launch-icon" aria-hidden="true">
+            +
+          </span>
+          <span className="app-launch-content">
+            <strong>Future Apps</strong>
+            <small>New aerospace tools will appear here.</small>
+          </span>
           <span className="app-launch-badge">Coming soon</span>
         </div>
       </section>
@@ -56,7 +98,7 @@ function App() {
   }
 
   if (routePath === "/note-tree") {
-    return <NoteTree navigateTo={navigateTo} />;
+    return <noteTree navigateTo={navigateTo} />;
   }
 
   if (routePath === "/") {
