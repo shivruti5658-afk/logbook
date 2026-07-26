@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import NumberGenerator from "./NumberGenerator";
-import NoteTree from "./NoteTree";
+import NoteTree from "./notetree/NoteTree";
 import "./App.css";
 
 function HomePage({ navigateTo }) {
