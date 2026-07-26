@@ -141,7 +141,7 @@ export function Editor({ note, saveState, onUpdate, onDelete }: Props) {
       return;
     }
 
-    const newParent = siblings[index - 2];
+    const newParent = siblings[index - 1];
 
     const children = childrenOf(note.nodes, newParent.id);
 
