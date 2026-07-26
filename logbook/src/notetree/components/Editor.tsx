@@ -256,9 +256,12 @@ export function Editor({ note, saveState, onUpdate, onDelete }: Props) {
 
     const remainingNodes = note.nodes.filter((item) => !ids.has(item.id));
 
-    // Keep at least one editable node.
+    // Never leave the editor without an input node.
     if (remainingNodes.length === 0) {
-      focus(node.id);
+      setTimeout(() => {
+        focus(node.id);
+      }, 0);
+
       return;
     }
 
@@ -369,7 +372,21 @@ export function Editor({ note, saveState, onUpdate, onDelete }: Props) {
     if (event.key === "Backspace" && !node.content) {
       event.preventDefault();
 
+      // 1. Last node — keep it.
+      if (note.nodes.length === 1) {
+        focus(node.id);
+        return;
+      }
+
+      // 2. Nested empty node — move it left first.
+      if (node.parentId !== null) {
+        outdent(node);
+        return;
+      }
+
+      // 3. Empty root node — remove it.
       remove(node);
+      return;
     }
   }
 
