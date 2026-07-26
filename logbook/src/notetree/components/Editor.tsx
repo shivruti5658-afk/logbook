@@ -6,6 +6,7 @@ import {
   Archive,
   CheckSquare,
   Code2,
+  Download,
   List,
   ListOrdered,
   Pin,
@@ -19,6 +20,8 @@ import type { BlockType, Note, NodeItem } from "../types";
 import { childrenOf, descendants, normalise, visibleNodes } from "../lib/tree";
 
 import { uid } from "../lib/id";
+
+import { exportNoteToPdf } from "../lib/exportPdf";
 
 import { NodeRow } from "./NodeRow";
 
@@ -407,6 +410,15 @@ export function Editor({ note, saveState, onUpdate, onDelete }: Props) {
         </div>
 
         <div className="editorActions">
+          <button
+            type="button"
+            className="iconButton"
+            title="Export as PDF"
+            aria-label="Export note as PDF"
+            onClick={() => exportNoteToPdf(note, visible)}
+          >
+            <Download size={18} />
+          </button>
           <button
             type="button"
             className={`iconButton ${note.pinned ? "activeButton" : ""}`}
