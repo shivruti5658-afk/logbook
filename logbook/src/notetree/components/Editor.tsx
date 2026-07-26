@@ -254,14 +254,24 @@ export function Editor({ note, saveState, onUpdate, onDelete }: Props) {
   function remove(node: NodeItem) {
     const ids = new Set([node.id, ...descendants(note.nodes, node.id)]);
 
+    const remainingNodes = note.nodes.filter((item) => !ids.has(item.id));
+
+    // Keep at least one editable node.
+    if (remainingNodes.length === 0) {
+      focus(node.id);
+      return;
+    }
+
     const index = visible.findIndex((item) => item.node.id === node.id);
 
     const target = visible[index - 1]?.node.id ?? visible[index + 1]?.node.id;
 
-    updateNodes(note.nodes.filter((item) => !ids.has(item.id)));
+    updateNodes(remainingNodes);
 
     if (target) {
-      focus(target);
+      setTimeout(() => {
+        focus(target);
+      }, 0);
     }
   }
 
