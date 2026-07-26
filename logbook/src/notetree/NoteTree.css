@@ -984,7 +984,7 @@ input {
    ========================================================= */
 
 .nodeRow {
-  --indent: calc(var(--node-depth) * 32px);
+  --indent: calc(var(--node-depth) * 38px);
 
   width: 100%;
   min-height: 43px;
